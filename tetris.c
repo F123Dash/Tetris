@@ -60,6 +60,7 @@ typedef struct _Game {
     TTF_Font *lose_font;
     TTF_Font *ui_font;
     uint8_t placed[ARENA_SIZE]; // 8 x 18 */
+    
 } Game;
 
 typedef uint8_t (*Update_callback)(Game *game, uint64_t frame, SDL_KeyCode key,
