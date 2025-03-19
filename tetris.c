@@ -115,42 +115,6 @@ drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text,
 
 void Game_Quit(Game *game); // Forward declaration of Game_Quit
 
-static uint8_t
-updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
-{
-    SDL_Point point = {.x = SCREEN_WIDTH_PX / 2, .y = SCREEN_HEIGHT_PX / 2 - 100};
-    SDL_Point resume_point = {.x = SCREEN_WIDTH_PX / 2, .y = SCREEN_HEIGHT_PX / 2 - 50};
-    SDL_Point exit_point = {.x = SCREEN_WIDTH_PX / 2, .y = SCREEN_HEIGHT_PX / 2};
-
-    // Render pause menu background
-    SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 200); // Semi-transparent black
-    SDL_Rect pause_background = {
-        .x = SCREEN_WIDTH_PX / 4,
-        .y = SCREEN_HEIGHT_PX / 4,
-        .w = SCREEN_WIDTH_PX / 2,
-        .h = SCREEN_HEIGHT_PX / 2
-    };
-    SDL_RenderFillRect(game->renderer, &pause_background);
-
-    // Render pause menu text
-    drawText(game->renderer, game->ui_font, "Paused", point);
-    drawText(game->renderer, game->ui_font, "Press R to Resume", resume_point);
-    drawText(game->renderer, game->ui_font, "Press E to Exit", exit_point);
-
-    if (keydown) {
-        switch (key) {
-            case SDLK_r: // Resume
-                return UPDATE_MAIN;
-
-            case SDLK_e: // Exit
-                Game_Quit(game);
-                exit(0);
-        }
-    }
-
-    return UPDATE_PAUSE;
-}
-
 int
 findPoints(uint8_t level, uint8_t lines)
 {
@@ -650,7 +614,7 @@ Game_Update(Game *game, const uint8_t fps)
         switch (update_id) {
             case UPDATE_MAIN: update = updateMain; break;
             case UPDATE_LOSE: update = updateLose; break;
-            case UPDATE_PAUSE: update = updatePause; break;
+            case UPDATE_PAUSE: break;
         }
 
         setColor(game->renderer, COLOR_GREY);
