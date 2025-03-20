@@ -26,6 +26,9 @@
 #define PIECE_COLOR_SIZE 4U
 #define ARENA_PADDING_TOP 2U
 #define FONT "./fonts/NotoSansMono-Regular.ttf"
+#define MAX_HIGH_SCORES 3
+#define HIGH_SCORE_FILE "highscores.txt"
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 #define END(check, str1, str2) \
     if (check) { \
@@ -43,7 +46,7 @@ enum {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE, COLOR_GREY,
 enum {COLLIDE_NONE = 0, COLLIDE_LEFT = 1 << 0, COLLIDE_RIGHT = 1 << 1, 
       COLLIDE_TOP = 1 << 2, COLLIDE_BOTTOM = 1 << 3, COLLIDE_PIECE = 1 << 4};
 
-enum {UPDATE_MAIN, UPDATE_LOSE, UPDATE_PAUSE};
+enum {UPDATE_MAIN, UPDATE_LOSE, UPDATE_PAUSE, UPDATE_GAME_OVER};
 
 typedef struct _Size {
     int w;
@@ -51,6 +54,11 @@ typedef struct _Size {
     uint8_t start_x;
     uint8_t start_y;
 } Size;
+
+typedef struct _HighScore {
+    char name[50];
+    uint64_t score;
+} HighScore;
 
 typedef struct _Game {
     uint8_t level;
@@ -60,10 +68,14 @@ typedef struct _Game {
     TTF_Font *lose_font;
     TTF_Font *ui_font;
     uint8_t placed[ARENA_SIZE]; // 8 x 18 */
+    HighScore high_scores[MAX_HIGH_SCORES];
+    int num_high_scores;
 } Game;
 
 typedef uint8_t (*Update_callback)(Game *game, uint64_t frame, SDL_KeyCode key,
                                    bool keydown);
+
+static char current_username[50];  // Global variable to store current username
 
 void 
 drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text,
@@ -113,6 +125,137 @@ drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text,
 }
 
 void Game_Quit(Game *game); // Forward declaration of Game_Quit
+void Game_Login(Game *game, char *username, size_t username_size); // Forward declaration of Game_Login
+
+void load_high_scores(Game *game) {
+    FILE *file = fopen(HIGH_SCORE_FILE, "r");
+    game->num_high_scores = 0;
+    
+    if (file != NULL) {
+        while (game->num_high_scores < MAX_HIGH_SCORES && 
+               fscanf(file, "%49[^,],%lu\n", 
+                     game->high_scores[game->num_high_scores].name,
+                     &game->high_scores[game->num_high_scores].score) == 2) {
+            game->num_high_scores++;
+        }
+        fclose(file);
+    }
+}
+
+void save_high_scores(Game *game) {
+    FILE *file = fopen(HIGH_SCORE_FILE, "w");
+    if (file != NULL) {
+        for (int i = 0; i < game->num_high_scores; i++) {
+            fprintf(file, "%s,%lu\n", 
+                    game->high_scores[i].name, 
+                    game->high_scores[i].score);
+        }
+        fclose(file);
+    }
+}
+
+void update_high_scores(Game *game, const char *name, uint64_t score) {
+    // Find position to insert new score
+    int pos = game->num_high_scores;
+    for (int i = 0; i < game->num_high_scores; i++) {
+        if (score > game->high_scores[i].score) {
+            pos = i;
+            break;
+        }
+    }
+    
+    // If score is high enough to be in top 3
+    if (pos < MAX_HIGH_SCORES) {
+        // Shift lower scores down
+        for (int i = MIN(game->num_high_scores, MAX_HIGH_SCORES - 1); i > pos; i--) {
+            memcpy(&game->high_scores[i], &game->high_scores[i-1], sizeof(HighScore));
+        }
+        
+        // Insert new score
+        strncpy(game->high_scores[pos].name, name, sizeof(game->high_scores[pos].name) - 1);
+        game->high_scores[pos].score = score;
+        
+        if (game->num_high_scores < MAX_HIGH_SCORES) {
+            game->num_high_scores++;
+        }
+        
+        save_high_scores(game);
+    }
+}
+
+void draw_high_scores(Game *game) {
+    // Draw title background with gradient effect
+    SDL_Rect title_bg = {
+        .x = SCREEN_WIDTH_PX / 4,
+        .y = 50,
+        .w = SCREEN_WIDTH_PX / 2,
+        .h = 100
+    };
+    
+    // Draw outer glow effect
+    SDL_Rect glow_bg = {
+        .x = title_bg.x - 5,
+        .y = title_bg.y - 5,
+        .w = title_bg.w + 10,
+        .h = title_bg.h + 10
+    };
+    
+    setColor(game->renderer, COLOR_BLUE);
+    SDL_RenderFillRect(game->renderer, &glow_bg);
+    setColor(game->renderer, COLOR_GREY);
+    SDL_RenderFillRect(game->renderer, &title_bg);
+    
+    // Draw title
+    SDL_Point title_pos = {.x = SCREEN_WIDTH_PX / 2, .y = 100};
+    drawText(game->renderer, game->lose_font, "TETRIS", title_pos);
+    
+    // Draw high scores section with more space
+    SDL_Rect scores_bg = {
+        .x = SCREEN_WIDTH_PX / 4,
+        .y = 200,  // Increased spacing from title
+        .w = SCREEN_WIDTH_PX / 2,
+        .h = 300   // More height for better spacing
+    };
+    
+    // Draw outer glow effect for scores
+    SDL_Rect scores_glow_bg = {
+        .x = scores_bg.x - 5,
+        .y = scores_bg.y - 5,
+        .w = scores_bg.w + 10,
+        .h = scores_bg.h + 10
+    };
+    
+    setColor(game->renderer, COLOR_BLUE);
+    SDL_RenderFillRect(game->renderer, &scores_glow_bg);
+    setColor(game->renderer, COLOR_BLACK);
+    SDL_RenderFillRect(game->renderer, &scores_bg);
+    
+    SDL_Point scores_title_pos = {.x = SCREEN_WIDTH_PX / 2, .y = 250};
+    drawText(game->renderer, game->lose_font, "High Scores", scores_title_pos);
+    
+    // Draw medal symbols and scores with more spacing
+    const char* medals[] = {"🥇", "🥈", "🥉"};
+    char score_text[256];
+    for (int i = 0; i < game->num_high_scores && i < 3; i++) {
+        SDL_Point score_pos = {
+            .x = SCREEN_WIDTH_PX / 2,
+            .y = 320 + (i * 60)  // Increased spacing between scores
+        };
+        
+        sprintf(score_text, "%s  %s - %lu", 
+                medals[i],
+                game->high_scores[i].name, 
+                game->high_scores[i].score);
+        
+        drawText(game->renderer, game->ui_font, score_text, score_pos);
+    }
+    
+    // If there are no high scores, show a message
+    if (game->num_high_scores == 0) {
+        SDL_Point no_scores_pos = {.x = SCREEN_WIDTH_PX / 2, .y = 350};
+        drawText(game->renderer, game->ui_font, "No high scores yet!", no_scores_pos);
+    }
+}
 
 static uint8_t
 updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
@@ -181,12 +324,12 @@ void
 setColor(SDL_Renderer *renderer, uint8_t color)
 {
     const SDL_Color colors[] = {
-        [COLOR_RED] = {.r = 217, .g = 100, .b = 89, .a = 255},
-        [COLOR_GREEN] = {.r = 88, .g = 140, .b = 126, .a = 255},
-        [COLOR_BLUE] = {.r = 146, .g = 161, .b = 185, .a = 255},
-        [COLOR_ORANGE] = {.r = 242, .g = 174, .b = 114, .a = 255},
-        [COLOR_GREY] = {.r = 89, .g = 89, .b = 89, .a = 89},
-        [COLOR_BLACK] = {.r = 0, .g = 0, .b = 0, .a = 0},
+        [COLOR_RED] = {.r = 255, .g = 87, .b = 87, .a = 255},    // Vibrant Red
+        [COLOR_GREEN] = {.r = 76, .g = 217, .b = 191, .a = 255}, // Teal
+        [COLOR_BLUE] = {.r = 77, .g = 170, .b = 255, .a = 255},  // Sky Blue
+        [COLOR_ORANGE] = {.r = 255, .g = 190, .b = 92, .a = 255},// Golden
+        [COLOR_GREY] = {.r = 34, .g = 40, .b = 49, .a = 255},    // Dark Grey
+        [COLOR_BLACK] = {.r = 57, .g = 62, .b = 70, .a = 255},   // Lighter Grey
     };
 
     SDL_SetRenderDrawColor(renderer, colors[color].r, colors[color].g,
@@ -467,6 +610,8 @@ Game_Init(Game *game)
                                         SDL_RENDERER_SOFTWARE);
 
     END(game->renderer == NULL, "Could not create renderer", SDL_GetError());
+    
+    load_high_scores(game);
 }
 
 void
@@ -494,12 +639,58 @@ drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
 static uint8_t
 updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
 {
-    SDL_Point point = {.x = ARENA_WIDTH_PX / 2 + ARENA_PADDING_PX,
-                       .y = ARENA_HEIGHT_PX / 2};
+    SDL_Point point = {.x = SCREEN_WIDTH_PX / 2,
+                       .y = SCREEN_HEIGHT_PX / 2 - 100};
+    SDL_Point score_point = {.x = SCREEN_WIDTH_PX / 2,
+                            .y = SCREEN_HEIGHT_PX / 2};
+    SDL_Point play_again_point = {.x = SCREEN_WIDTH_PX / 2,
+                                 .y = SCREEN_HEIGHT_PX / 2 + 100};
+    SDL_Point exit_point = {.x = SCREEN_WIDTH_PX / 2,
+                           .y = SCREEN_HEIGHT_PX / 2 + 150};
+
+    static bool first_update = true;
+    if (first_update) {
+        update_high_scores(game, current_username, game->score);
+        first_update = false;
+    }
+
+    char score_text[255];
+    sprintf(score_text, "Final Score: %lu", game->score);
 
     drawPlaced(game->placed, game->renderer);
-    drawText(game->renderer, game->lose_font, "You Lose", point);
+    drawText(game->renderer, game->lose_font, "Game Over", point);
+    drawText(game->renderer, game->ui_font, score_text, score_point);
+    drawText(game->renderer, game->ui_font, "Press SPACE to Play Again", play_again_point);
+    drawText(game->renderer, game->ui_font, "Press ESC to Exit", exit_point);
+
+    if (keydown) {
+        switch (key) {
+            case SDLK_SPACE:
+                first_update = true;  // Reset for next game
+                return UPDATE_GAME_OVER;
+            case SDLK_ESCAPE:
+                Game_Quit(game);
+                exit(0);
+        }
+    }
+
     return UPDATE_LOSE;
+}
+
+static uint8_t
+updateGameOver(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
+{
+    // Reset game state
+    game->score = 0;
+    game->level = 0;
+    memset(game->placed, 0, sizeof(uint8_t) * ARENA_SIZE);
+    
+    // Get new player name
+    char username[50];
+    Game_Login(game, username, sizeof(username));
+    printf("Welcome back, %s!\n", username);
+    
+    return UPDATE_MAIN;
 }
 
 static uint8_t
@@ -620,7 +811,27 @@ updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
 
     game->score += findPoints(game->level, lines);
 
-    sprintf(score_string, "score %ld", game->score);
+    // Draw score with background and glow effect
+    SDL_Rect score_glow_bg = {
+        .x = 15,
+        .y = 15,
+        .w = ARENA_PADDING_PX - 30,
+        .h = 70
+    };
+    
+    SDL_Rect score_bg = {
+        .x = 20,
+        .y = 20,
+        .w = ARENA_PADDING_PX - 40,
+        .h = 60
+    };
+    
+    setColor(game->renderer, COLOR_BLUE);
+    SDL_RenderFillRect(game->renderer, &score_glow_bg);
+    setColor(game->renderer, COLOR_BLACK);
+    SDL_RenderFillRect(game->renderer, &score_bg);
+
+    sprintf(score_string, "Score: %ld", game->score);
     drawText(game->renderer, game->ui_font, score_string, point);
     drawPlaced(game->placed, game->renderer);
     return UPDATE_MAIN;
@@ -632,7 +843,7 @@ Game_Update(Game *game, const uint8_t fps)
     uint64_t frame = 0;
     bool quit = false;
     bool keydown = false;
-    uint8_t update_id = UPDATE_MAIN; // Start with the main game state
+    uint8_t update_id = UPDATE_MAIN;
     Update_callback update;
     float mspd = (1.0f / (float)fps) * 1000.0f;
 
@@ -650,6 +861,7 @@ Game_Update(Game *game, const uint8_t fps)
             case UPDATE_MAIN: update = updateMain; break;
             case UPDATE_LOSE: update = updateLose; break;
             case UPDATE_PAUSE: update = updatePause; break;
+            case UPDATE_GAME_OVER: update = updateGameOver; break;
         }
 
         setColor(game->renderer, COLOR_GREY);
@@ -739,28 +951,58 @@ void Game_Login(Game *game, char *username, size_t username_size)
             }
         }
 
-        // Clear screen
-        SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
+        // Clear screen with a gradient-like background
+        SDL_SetRenderDrawColor(game->renderer, 34, 40, 49, 255);  // Dark background
         SDL_RenderClear(game->renderer);
 
-        // Draw text
-        int text_width, text_height;
+        // Draw high scores
+        draw_high_scores(game);
+
+        // Draw input section background with glow effect
+        SDL_Rect input_glow_bg = {
+            .x = SCREEN_WIDTH_PX / 4 - 5,
+            .y = SCREEN_HEIGHT_PX - 205,
+            .w = SCREEN_WIDTH_PX / 2 + 10,
+            .h = 160
+        };
+        
+        SDL_Rect input_bg = {
+            .x = SCREEN_WIDTH_PX / 4,
+            .y = SCREEN_HEIGHT_PX - 200,
+            .w = SCREEN_WIDTH_PX / 2,
+            .h = 150
+        };
+        
+        setColor(game->renderer, COLOR_BLUE);
+        SDL_RenderFillRect(game->renderer, &input_glow_bg);
+        setColor(game->renderer, COLOR_BLACK);
+        SDL_RenderFillRect(game->renderer, &input_bg);
+
+        // Draw input text with better spacing
         char display_text[256];
+        int text_width, text_height;
         
         if (strlen(username) == 0) {
             strcpy(display_text, "Enter Your Name: ");
         } else {
-            sprintf(display_text, "Name: %s", username);
+            sprintf(display_text, "Name: %s%s", username, show_cursor ? "_" : "");
         }
         
         TTF_SizeText(game->ui_font, display_text, &text_width, &text_height);
         
         SDL_Point text_position = {
-            .x = SCREEN_WIDTH_PX / 2 - text_width / 2,
-            .y = SCREEN_HEIGHT_PX / 2 - text_height / 2
+            .x = SCREEN_WIDTH_PX / 2,
+            .y = SCREEN_HEIGHT_PX - 150
         };
         
         drawText(game->renderer, game->ui_font, display_text, text_position);
+        
+        // Draw instructions with better spacing
+        SDL_Point instructions_pos = {
+            .x = SCREEN_WIDTH_PX / 2,
+            .y = SCREEN_HEIGHT_PX - 90
+        };
+        drawText(game->renderer, game->ui_font, "Press ENTER to Start", instructions_pos);
     
         SDL_RenderPresent(game->renderer);
     }
@@ -772,8 +1014,10 @@ void Game_Login(Game *game, char *username, size_t username_size)
         exit(0);
     }
     
+    strncpy(current_username, username, sizeof(current_username) - 1);
     printf("Current username: '%s'\n", username);
 }
+
 int
 main(int argc, char *argv[])
 {
@@ -781,13 +1025,10 @@ main(int argc, char *argv[])
     char username[50];
 
     Game_Init(&game);
-
     Game_Login(&game, username, sizeof(username));
     printf("Welcome, %s!\n", username);
 
     Game_Update(&game, 60);
-
-    printf("Goodbye, %s! Your final score is %lu.\n", username, game.score);
 
     Game_Quit(&game);
     return 0;
