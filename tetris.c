@@ -748,7 +748,7 @@ void Game_Login(Game *game, char *username, size_t username_size)
         char display_text[256];
         
         if (strlen(username) == 0) {
-            strcpy(display_text, "Name: ");
+            strcpy(display_text, "Enter Your Name: ");
         } else {
             sprintf(display_text, "Name: %s", username);
         }
