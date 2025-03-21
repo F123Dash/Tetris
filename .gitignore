@@ -5,6 +5,8 @@
 # Prerequisites
 *.d
 highscores.txt
+tetris
+tetris.exe
 # Object files
 *.o
 *.ko
