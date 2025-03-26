@@ -1,3 +1,4 @@
+//Preprocessor Directives
 #include <SDL2/SDL_error.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -17,7 +18,7 @@ void setColor(SDL_Renderer *renderer, uint8_t color);
 void Game_Quit(Game *game);
 void Game_Login(Game *game, char *username, size_t username_size);
 
-//Definations
+//Macro Definitions
 #define ARENA_WIDTH_PX 400U
 #define ARENA_HEIGHT_PX 800U
 #define SCREEN_WIDTH_PX 1200U
@@ -46,16 +47,17 @@ void Game_Login(Game *game, char *username, size_t username_size);
         exit(1); \
     } \
 
-enum {PIECE_I, PIECE_J, PIECE_L, PIECE_O, PIECE_S, PIECE_T, PIECE_Z,
-      PIECE_COUNT};
 
-enum {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE, COLOR_GREY,
-      COLOR_BLACK, COLOR_SIZE};
+//Enumerations
+enum {PIECE_I, PIECE_J, PIECE_L, PIECE_O, PIECE_S, PIECE_T, PIECE_Z, PIECE_COUNT};
 
-enum {COLLIDE_NONE = 0, COLLIDE_LEFT = 1 << 0, COLLIDE_RIGHT = 1 << 1, 
-      COLLIDE_TOP = 1 << 2, COLLIDE_BOTTOM = 1 << 3, COLLIDE_PIECE = 1 << 4};
+enum {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE, COLOR_GREY, COLOR_BLACK, COLOR_SIZE};
+
+enum {COLLIDE_NONE = 0, COLLIDE_LEFT = 1 << 0, COLLIDE_RIGHT = 1 << 1, COLLIDE_TOP = 1 << 2, COLLIDE_BOTTOM = 1 << 3, COLLIDE_PIECE = 1 << 4};
 
 enum {UPDATE_MAIN, UPDATE_LOSE, UPDATE_PAUSE, UPDATE_GAME_OVER};
+
+//Size of a Single Tetris Piece 
 
 typedef struct _Size {
     int w;
@@ -64,10 +66,14 @@ typedef struct _Size {
     uint8_t start_y;
 } Size;
 
+//Stores info about a Player's HighScore
+
 typedef struct _HighScore {
     char name[50];
     uint64_t score;
 } HighScore;
+
+// Represents Overall State of the Game
 
 typedef struct _Game {
     uint8_t level;
