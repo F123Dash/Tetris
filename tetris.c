@@ -96,7 +96,43 @@ drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text,
 
     int w = 0;
     int h = 0;
-    int padding = 8;
+
+    TTF_SizeText(font, text, &w, &h);
+
+    SDL_Color font_color = {.r = 255, .g = 255, .b = 255, .a = 255};
+    SDL_Surface *surface = TTF_RenderText_Solid(font, text, font_color);
+
+    END(surface == NULL, "Could not create text surface\n", SDL_GetError());
+
+    SDL_Rect rect = {
+        .x = point.x - (w / 2),
+        .y = point.y - (h / 2),
+        .w = w,
+        .h = h,
+    };
+
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+    END(texture == NULL, "Could not create texture", SDL_GetError());
+    
+    SDL_RenderCopy(renderer, texture, NULL, &rect);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+}
+
+// Add a new function for drawing text with background
+void 
+drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *text,
+                      SDL_Point point)
+{
+    if (text == NULL || strlen(text) == 0) {
+        fprintf(stderr, "Error: Text is empty or null\n");
+        return;
+    }
+
+    int w = 0;
+    int h = 0;
+    int padding = 12;
 
     TTF_SizeText(font, text, &w, &h);
 
@@ -123,10 +159,14 @@ drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text,
 
     END(texture == NULL, "Could not create texture", SDL_GetError());
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    // Add a subtle gradient effect to the background
+    SDL_SetRenderDrawColor(renderer, 40, 44, 52, 255);
     SDL_RenderFillRect(renderer, &text_background);
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    
+    // Add a subtle border
+    SDL_SetRenderDrawColor(renderer, 65, 131, 215, 100);
     SDL_RenderDrawRect(renderer, &text_background);
+    
     SDL_RenderCopy(renderer, texture, NULL, &rect);
     SDL_FreeSurface(surface);
     SDL_DestroyTexture(texture);
@@ -278,31 +318,67 @@ void draw_high_scores(Game *game) {
 static uint8_t
 updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
 {
-    SDL_Point point = {.x = SCREEN_WIDTH_PX / 2, .y = SCREEN_HEIGHT_PX / 2 - 100};
-    SDL_Point resume_point = {.x = SCREEN_WIDTH_PX / 2, .y = SCREEN_HEIGHT_PX / 2 - 50};
-    SDL_Point exit_point = {.x = SCREEN_WIDTH_PX / 2, .y = SCREEN_HEIGHT_PX / 2};
+    SDL_Point title_point = {
+        .x = SCREEN_WIDTH_PX / 2,
+        .y = SCREEN_HEIGHT_PX / 2 - 160  // Moved up to make room
+    };
+    SDL_Point resume_point = {
+        .x = SCREEN_WIDTH_PX / 2,
+        .y = SCREEN_HEIGHT_PX / 2 - 80
+    };
+    SDL_Point menu_point = {  // New menu option
+        .x = SCREEN_WIDTH_PX / 2,
+        .y = SCREEN_HEIGHT_PX / 2
+    };
+    SDL_Point exit_point = {
+        .x = SCREEN_WIDTH_PX / 2,
+        .y = SCREEN_HEIGHT_PX / 2 + 80
+    };
 
-    // Render pause menu background
-    SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 200); // Semi-transparent black
-    SDL_Rect pause_background = {
+    // Add a semi-transparent overlay
+    SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 200);
+    SDL_Rect pause_overlay = {
+        .x = 0,
+        .y = 0,
+        .w = SCREEN_WIDTH_PX,
+        .h = SCREEN_HEIGHT_PX
+    };
+    SDL_RenderFillRect(game->renderer, &pause_overlay);
+
+    // Add a container for the pause menu
+    SDL_Rect pause_container = {
         .x = SCREEN_WIDTH_PX / 4,
         .y = SCREEN_HEIGHT_PX / 4,
         .w = SCREEN_WIDTH_PX / 2,
         .h = SCREEN_HEIGHT_PX / 2
     };
-    SDL_RenderFillRect(game->renderer, &pause_background);
+    
+    // Add a subtle glow effect
+    SDL_Rect glow = pause_container;
+    glow.x -= 4;
+    glow.y -= 4;
+    glow.w += 8;
+    glow.h += 8;
+    setColor(game->renderer, COLOR_BLUE);
+    SDL_RenderFillRect(game->renderer, &glow);
+    
+    setColor(game->renderer, COLOR_BLACK);
+    SDL_RenderFillRect(game->renderer, &pause_container);
 
-    // Render pause menu text
-    drawText(game->renderer, game->ui_font, "Paused", point);
+    drawText(game->renderer, game->lose_font, "PAUSED", title_point);
     drawText(game->renderer, game->ui_font, "Press R to Resume", resume_point);
-    drawText(game->renderer, game->ui_font, "Press E to Exit", exit_point);
+    drawText(game->renderer, game->ui_font, "Press M for Main Menu", menu_point);
+    drawText(game->renderer, game->ui_font, "Press E to Exit Game", exit_point);
 
     if (keydown) {
         switch (key) {
             case SDLK_r: // Resume
                 return UPDATE_MAIN;
 
-            case SDLK_e: // Exit
+            case SDLK_m: // Return to main menu
+                return UPDATE_GAME_OVER;  // This will trigger the login screen
+
+            case SDLK_e: // Exit game completely
                 Game_Quit(game);
                 exit(0);
         }
@@ -841,33 +917,15 @@ updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
     }
 
     uint8_t lines = checkForRowClearing(game->placed);
-    SDL_Point point = {.x = ARENA_PADDING_PX / 2, .y = 50};
+    SDL_Point point = {.x = ARENA_PADDING_PX / 2, .y = 100};
     char score_string[255];
 
     game->score += findPoints(game->level, lines);
 
-    // Draw score with background and glow effect
-    SDL_Rect score_glow_bg = {
-        .x = 15,
-        .y = 15,
-        .w = ARENA_PADDING_PX - 30,
-        .h = 70
-    };
-    
-    SDL_Rect score_bg = {
-        .x = 20,
-        .y = 20,
-        .w = ARENA_PADDING_PX - 40,
-        .h = 60
-    };
-    
-    setColor(game->renderer, COLOR_BLUE);
-    SDL_RenderFillRect(game->renderer, &score_glow_bg);
-    setColor(game->renderer, COLOR_BLACK);
-    SDL_RenderFillRect(game->renderer, &score_bg);
-
+    // Simply draw the score text without background or glow
     sprintf(score_string, "Score: %ld", game->score);
     drawText(game->renderer, game->ui_font, score_string, point);
+    
     drawPlaced(game->placed, game->renderer);
     return UPDATE_MAIN;
 }
@@ -987,7 +1045,7 @@ void Game_Login(Game *game, char *username, size_t username_size)
         }
 
         // Clear screen with a modern gradient background
-        SDL_SetRenderDrawColor(game->renderer, 35, 41, 50, 255);  // Dark background
+        SDL_SetRenderDrawColor(game->renderer, 35, 41, 50, 255);
         SDL_RenderClear(game->renderer);
 
         // Draw decorative header
@@ -1000,7 +1058,7 @@ void Game_Login(Game *game, char *username, size_t username_size)
         setColor(game->renderer, COLOR_BLUE);
         SDL_RenderFillRect(game->renderer, &header_bg);
 
-        // Draw input section with modern design
+        // Draw input section
         SDL_Rect input_border = {
             .x = SCREEN_WIDTH_PX / 4 - 10,
             .y = SCREEN_HEIGHT_PX - 220,
@@ -1008,7 +1066,6 @@ void Game_Login(Game *game, char *username, size_t username_size)
             .h = 180
         };
         
-        // Create layered border effect
         setColor(game->renderer, COLOR_BLUE);
         SDL_RenderFillRect(game->renderer, &input_border);
         
@@ -1018,33 +1075,26 @@ void Game_Login(Game *game, char *username, size_t username_size)
         setColor(game->renderer, COLOR_BLACK);
         SDL_RenderFillRect(game->renderer, &input_inner);
 
-        // Draw input text with modern styling
-        char display_text[256];
-        int text_width, text_height;
-        
-        // Add a welcome message
+        // Draw all text without glow effect
         SDL_Point welcome_pos = {
             .x = SCREEN_WIDTH_PX / 2,
             .y = SCREEN_HEIGHT_PX - 190
         };
         drawText(game->renderer, game->ui_font, "Welcome to Tetris!", welcome_pos);
         
+        char display_text[256];
         if (strlen(username) == 0) {
             strcpy(display_text, "Enter Your Name: _");
         } else {
             sprintf(display_text, " %s%s", username, show_cursor ? "_" : "");
         }
         
-        TTF_SizeText(game->ui_font, display_text, &text_width, &text_height);
-        
         SDL_Point text_position = {
             .x = SCREEN_WIDTH_PX / 2,
             .y = SCREEN_HEIGHT_PX - 140
         };
-        
         drawText(game->renderer, game->ui_font, display_text, text_position);
         
-        // Draw instructions with modern styling
         SDL_Point instructions_pos = {
             .x = SCREEN_WIDTH_PX / 2,
             .y = SCREEN_HEIGHT_PX - 90
@@ -1069,12 +1119,12 @@ void
 setColor(SDL_Renderer *renderer, uint8_t color)
 {
     const SDL_Color colors[] = {
-        [COLOR_RED] = {.r = 255, .g = 89, .b = 94, .a = 255},    // Coral Red
-        [COLOR_GREEN] = {.r = 111, .g = 207, .b = 151, .a = 255}, // Mint Green
-        [COLOR_BLUE] = {.r = 118, .g = 181, .b = 247, .a = 255},  // Soft Blue
-        [COLOR_ORANGE] = {.r = 255, .g = 175, .b = 104, .a = 255},// Peach
-        [COLOR_GREY] = {.r = 45, .g = 52, .b = 64, .a = 255},    // Deep Grey
-        [COLOR_BLACK] = {.r = 35, .g = 41, .b = 50, .a = 255},   // Dark Background
+        [COLOR_RED] = {.r = 239, .g = 71, .b = 111, .a = 255},    // Soft Red
+        [COLOR_GREEN] = {.r = 86, .g = 192, .b = 146, .a = 255},  // Muted Green
+        [COLOR_BLUE] = {.r = 65, .g = 131, .b = 215, .a = 255},   // Royal Blue
+        [COLOR_ORANGE] = {.r = 255, .g = 159, .b = 67, .a = 255}, // Warm Orange
+        [COLOR_GREY] = {.r = 55, .g = 65, .b = 81, .a = 255},     // Slate Grey
+        [COLOR_BLACK] = {.r = 30, .g = 35, .b = 41, .a = 255},    // Deep Black
     };
 
     SDL_SetRenderDrawColor(renderer, colors[color].r, colors[color].g,
