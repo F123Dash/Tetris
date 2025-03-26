@@ -1,0 +1,3 @@
+compile :- gcc -o tetris tetris.c -lSDL2 -lSDL2_ttf
+make the executable executable :- chmod +x tetris
+run the game :- ./tetris
