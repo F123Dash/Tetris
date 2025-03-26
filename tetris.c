@@ -17,6 +17,7 @@ void setColor(SDL_Renderer *renderer, uint8_t color);
 void Game_Quit(Game *game);
 void Game_Login(Game *game, char *username, size_t username_size);
 
+//Definations
 #define ARENA_WIDTH_PX 400U
 #define ARENA_HEIGHT_PX 800U
 #define SCREEN_WIDTH_PX 1200U
