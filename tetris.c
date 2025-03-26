@@ -890,7 +890,7 @@ updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
             break;
         }
 
-        case SDLK_p: // Pause the game
+        case SDLK_ESCAPE: // Pause the game
             return UPDATE_PAUSE;
     }
 
