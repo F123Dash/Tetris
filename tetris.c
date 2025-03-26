@@ -48,14 +48,13 @@ void Game_Login(Game *game, char *username, size_t username_size);
     } \
 
 
-//Enumerations
-enum {PIECE_I, PIECE_J, PIECE_L, PIECE_O, PIECE_S, PIECE_T, PIECE_Z, PIECE_COUNT};
+enum {PIECE_I, PIECE_J, PIECE_L, PIECE_O, PIECE_S, PIECE_T, PIECE_Z, PIECE_COUNT};  // Differnet Types of Tetris Pieces(Tetrominos)
 
-enum {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE, COLOR_GREY, COLOR_BLACK, COLOR_SIZE};
+enum {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE, COLOR_GREY, COLOR_BLACK, COLOR_SIZE};  //Represents the Colors for Tetrominos and the windows
 
-enum {COLLIDE_NONE = 0, COLLIDE_LEFT = 1 << 0, COLLIDE_RIGHT = 1 << 1, COLLIDE_TOP = 1 << 2, COLLIDE_BOTTOM = 1 << 3, COLLIDE_PIECE = 1 << 4};
+enum {COLLIDE_NONE = 0, COLLIDE_LEFT = 1 << 0, COLLIDE_RIGHT = 1 << 1, COLLIDE_TOP = 1 << 2, COLLIDE_BOTTOM = 1 << 3, COLLIDE_PIECE = 1 << 4};  //Represents types of collisions that can occur
 
-enum {UPDATE_MAIN, UPDATE_LOSE, UPDATE_PAUSE, UPDATE_GAME_OVER};
+enum {UPDATE_MAIN, UPDATE_LOSE, UPDATE_PAUSE, UPDATE_GAME_OVER}; //Represents the different states of game
 
 //Size of a Single Tetris Piece 
 
@@ -76,28 +75,25 @@ typedef struct _HighScore {
 // Represents Overall State of the Game
 
 typedef struct _Game {
-    uint8_t level;
-    uint64_t score;
-    SDL_Renderer *renderer;
-    SDL_Window *window;
-    TTF_Font *lose_font;
-    TTF_Font *ui_font;
-    uint8_t placed[ARENA_SIZE]; // 8 x 18 */
-    HighScore high_scores[MAX_HIGH_SCORES];
-    int num_high_scores;
+    uint8_t level;                           // current level (affect the difficulty)
+    uint64_t score;                          // current score
+    SDL_Renderer *renderer;                  // SDL renderer used to draw graphics
+    SDL_Window *window;                      // SDL window 
+    TTF_Font *lose_font;                     // Font used for "Game Over"
+    TTF_Font *ui_font;                       // Font used for scores and instructions
+    uint8_t placed[ARENA_SIZE]; // 8 x 18 */ // A 1D array representing the arena grid (8x18 blocks). Each element indicates whether a block is occupied
+    HighScore high_scores[MAX_HIGH_SCORES];  // An array to store top high scores 
+    int num_high_scores;                     // The number of high scores currently stored
 } Game;
 
-typedef uint8_t (*Update_callback)(Game *game, uint64_t frame, SDL_KeyCode key,
-                                   bool keydown);
+typedef uint8_t (*Update_callback)(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown);  //Defines a function pointer that updates the game based on the current frame, user input etc.
 
 static char current_username[50];  // Global variable to store current username
 
-void 
-drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text,
-         SDL_Point point)
-{
+//Function based on rendering text on screen
+void drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Point point){
     if (text == NULL || strlen(text) == 0) {
-        fprintf(stderr, "Error: Text is empty or null\n");
+        fprintf(stderr, "Text is empty");
         return;
     }
 
@@ -133,7 +129,7 @@ drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *text,
                       SDL_Point point)
 {
     if (text == NULL || strlen(text) == 0) {
-        fprintf(stderr, "Error: Text is empty or null\n");
+        fprintf(stderr, "Text is empty");
         return;
     }
 
