@@ -1,3 +1,2 @@
-kevin,280
-kevin,200
-harshil,40
+herry,0
+kevin,0

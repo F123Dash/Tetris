@@ -101,10 +101,8 @@ void drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Poin
     int h = 0;
 
     TTF_SizeText(font, text, &w, &h);
-
     SDL_Color font_color = {.r = 255, .g = 255, .b = 255, .a = 255};
     SDL_Surface *surface = TTF_RenderText_Solid(font, text, font_color);
-
     END(surface == NULL, "Could not create text surface\n", SDL_GetError());
 
     SDL_Rect rect = {
@@ -142,7 +140,7 @@ drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *text,
     SDL_Color font_color = {.r = 255, .g = 255, .b = 255, .a = 255};
     SDL_Surface *surface = TTF_RenderText_Solid(font, text, font_color);
 
-    END(surface == NULL, "Could not create text surface\n", SDL_GetError());
+    END(surface == NULL, "Could not create text surface", SDL_GetError());
 
     SDL_Rect rect = {
         .x = point.x - (w / 2),
@@ -162,14 +160,13 @@ drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *text,
 
     END(texture == NULL, "Could not create texture", SDL_GetError());
 
-    // Add a subtle gradient effect to the background
+    // Add a gradient effect to the background
     SDL_SetRenderDrawColor(renderer, 40, 44, 52, 255);
     SDL_RenderFillRect(renderer, &text_background);
     
-    // Add a subtle border
+    // Add a border
     SDL_SetRenderDrawColor(renderer, 65, 131, 215, 100);
     SDL_RenderDrawRect(renderer, &text_background);
-    
     SDL_RenderCopy(renderer, texture, NULL, &rect);
     SDL_FreeSurface(surface);
     SDL_DestroyTexture(texture);
@@ -180,10 +177,7 @@ void load_high_scores(Game *game) {
     game->num_high_scores = 0;
     
     if (file != NULL) {
-        while (game->num_high_scores < MAX_HIGH_SCORES && 
-               fscanf(file, "%49[^,],%lu\n", 
-                     game->high_scores[game->num_high_scores].name,
-                     &game->high_scores[game->num_high_scores].score) == 2) {
+        while (game->num_high_scores < MAX_HIGH_SCORES && fscanf(file, "%lu\n", game->high_scores[game->num_high_scores].name, &game->high_scores[game->num_high_scores].score) == 2) {
             game->num_high_scores++;
         }
         fclose(file);
