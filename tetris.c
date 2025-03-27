@@ -99,33 +99,30 @@ void drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Poin
 
     int w = 0;
     int h = 0;
-
+    
     TTF_SizeText(font, text, &w, &h);
     SDL_Color font_color = {.r = 255, .g = 255, .b = 255, .a = 255};
     SDL_Surface *surface = TTF_RenderText_Solid(font, text, font_color);
-    END(surface == NULL, "Could not create text surface\n", SDL_GetError());
-
+    END(surface == NULL, "Could not create surface\n", SDL_GetError());
+    //Position the text on the screen
     SDL_Rect rect = {
         .x = point.x - (w / 2),
         .y = point.y - (h / 2),
         .w = w,
         .h = h,
     };
-
+    //Convert thr suraface into a texture (This step is important because SDL2 renders textures, not surfaces)
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
 
     END(texture == NULL, "Could not create texture", SDL_GetError());
-    
+    //Renders the texture onto screen
     SDL_RenderCopy(renderer, texture, NULL, &rect);
     SDL_FreeSurface(surface);
     SDL_DestroyTexture(texture);
 }
 
 // Add a new function for drawing text with background
-void 
-drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *text,
-                      SDL_Point point)
-{
+void drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Point point){
     if (text == NULL || strlen(text) == 0) {
         fprintf(stderr, "Text is empty");
         return;
