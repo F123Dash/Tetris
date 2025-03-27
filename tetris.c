@@ -1008,6 +1008,21 @@ void Game_Login(Game *game, char *username, size_t username_size)
     SDL_StartTextInput();
     memset(username, 0, username_size);
 
+    // Load the image
+    SDL_Surface *image_surface = SDL_LoadBMP("./images/tetris_logo.bmp");
+    END(image_surface == NULL, "Could not load image", SDL_GetError());
+    SDL_Texture *image_texture = SDL_CreateTextureFromSurface(game->renderer, image_surface);
+    SDL_FreeSurface(image_surface); // Free the surface after creating the texture
+    END(image_texture == NULL, "Could not create texture from image", SDL_GetError());
+
+    // Define the position and size of the image
+    SDL_Rect image_rect = {
+        .x = SCREEN_WIDTH_PX / 2 - 150, // Center the image horizontally
+        .y = SCREEN_HEIGHT_PX / 4 - 50, // Position the image near the top
+        .w = 300, // Width of the image
+        .h = 100  // Height of the image
+    };
+
     // Simple blinking cursor
     bool show_cursor = true;
     uint32_t cursor_timer = SDL_GetTicks();
@@ -1041,6 +1056,9 @@ void Game_Login(Game *game, char *username, size_t username_size)
         // Clear screen with a modern gradient background
         SDL_SetRenderDrawColor(game->renderer, 35, 41, 50, 255);
         SDL_RenderClear(game->renderer);
+
+        // Render the image
+        SDL_RenderCopy(game->renderer, image_texture, NULL, &image_rect);
 
         // Draw decorative header
         SDL_Rect header_bg = {
@@ -1099,6 +1117,9 @@ void Game_Login(Game *game, char *username, size_t username_size)
     }
 
     SDL_StopTextInput();
+
+    // Free the image texture
+    SDL_DestroyTexture(image_texture);
 
     if (quit) {
         Game_Quit(game);

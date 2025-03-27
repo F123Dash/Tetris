@@ -1,2 +1,2 @@
-herry,0
-kevin,0
+kevin,2380
+kevin,300
