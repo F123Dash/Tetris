@@ -1,1 +1,42 @@
 # Tetris
+A modern implementation of the classic Tetris game written in C using SDL2.
+
+## Features
+
+- Classic Tetris gameplay
+- Modern UI
+- Top 3 high scores system
+- Player name input
+- Pause functionality
+- Score tracking
+
+## Controls
+
+- **A/D**: Move piece left/right
+- **S**: Soft drop
+- **R**: Rotate piece
+- **ESC**: Pause game
+- **Space**: Play again (after game over)
+- **E**: Exit game
+
+## Dependencies
+
+- SDL2
+- SDL2_ttf
+- C compiler (gcc/clang)
+
+## Building
+
+Make sure you have SDL2 and SDL2_ttf development libraries installed:
+
+Then compile the game:
+
+```bash
+gcc -o tetris tetris.c -I src/include -L src/lib $(pkg-config --cflags --libs sdl2 SDL2_ttf)
+```
+
+## Running
+
+```bash
+./tetris
+```
