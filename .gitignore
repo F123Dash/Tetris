@@ -4,7 +4,9 @@
 ### C ###
 # Prerequisites
 *.d
-
+highscores.txt
+tetris
+tetris.exe
 # Object files
 *.o
 *.ko
@@ -39,6 +41,7 @@
 *.i*86
 *.x86_64
 *.hex
+tetris
 
 # Debug files
 *.dSYM/
@@ -72,6 +75,11 @@ dkms.conf
 # Compiled Static libraries
 *.lai
 
-# Executables
+# IDE specific files
+.vscode/
+.idea/
+
+# Game specific
+highscores.txt
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,c
