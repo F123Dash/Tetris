@@ -33,7 +33,11 @@ Make sure you have SDL2 and SDL2_ttf development libraries installed:
 Then compile the game:
 
 ```bash
-gcc -o tetris tetris.c -I src/include -L src/lib $(pkg-config --cflags --libs sdl2 SDL2_ttf)
+g++ -I src\include -L src\lib -o tetris tetris.c -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf
+```
+OtherWise save the MakeFile and run it 
+```bash
+mingw32-make
 ```
 
 ## Running
