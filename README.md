@@ -18,12 +18,13 @@ A modern implementation of the classic Tetris game written in C using SDL2.
 - **ESC**: Pause game
 - **Space**: Play again (after game over)
 - **E**: Exit game
+- **M**: Exit to Login Window
 
 ## Dependencies
 
 - SDL2
 - SDL2_ttf
-- C compiler (gcc/clang)
+- C compiler
 
 ## Building
 
