@@ -309,9 +309,7 @@ void draw_high_scores(Game *game) {
     drawText(game->renderer, game->ui_font, "Press SPACE to continue", instructions_pos);
 }
 
-static uint8_t
-updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
-{
+static uint8_t updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
     SDL_Point title_point = {
         .x = SCREEN_WIDTH_PX / 2,
         .y = SCREEN_HEIGHT_PX / 2 - 160  // Moved up to make room
@@ -381,9 +379,7 @@ updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
     return UPDATE_PAUSE;
 }
 
-int
-findPoints(uint8_t level, uint8_t lines)
-{
+int findPoints(uint8_t level, uint8_t lines){
     switch (lines) {
         case 1: return 40 * (level + 1);
         case 2: return 100 * (level + 1);
@@ -394,29 +390,22 @@ findPoints(uint8_t level, uint8_t lines)
     return 0;
 }
 
-void
-addToArena(uint8_t *placed, uint8_t i)
-{
+void addToArena(uint8_t *placed, uint8_t i){
     // bounds checking
     if (i < ARENA_SIZE && i >= 0) placed[i] = 1;
 }
 
-uint8_t
-getPlacedPosition(SDL_Point pos)
-{
+uint8_t getPlacedPosition(SDL_Point pos){
     uint8_t i = pos.y * ARENA_WIDTH + pos.x;
     return i < ARENA_SIZE ? i : ARENA_SIZE - 1;
 }
 
-void
-getXY(uint8_t i, int *x, int *y) {
+void getXY(uint8_t i, int *x, int *y) {
     *x = i % PIECE_WIDTH;
     *y = floor((float)i / PIECE_HEIGHT);
 }
 
-void
-getPieceSize(uint8_t *piece, Size *size)
-{
+void getPieceSize(uint8_t *piece, Size *size){
     memset(size, 0, sizeof(Size));
 
     bool foundStartx = false;
@@ -455,9 +444,7 @@ getPieceSize(uint8_t *piece, Size *size)
     }
 }
 
-void
-rotatePiece(uint8_t *piece, uint8_t *rotated)
-{
+void rotatePiece(uint8_t *piece, uint8_t *rotated){
     memset(rotated, 0, sizeof(uint8_t) * PIECE_SIZE);
 
     uint8_t i = 0;
@@ -473,10 +460,7 @@ rotatePiece(uint8_t *piece, uint8_t *rotated)
     }
 }
 
-void
-drawTetromino(SDL_Renderer *renderer, uint8_t piece[PIECE_SIZE],
-                     SDL_Point position, uint8_t color)
-{
+void drawTetromino(SDL_Renderer *renderer, uint8_t piece[PIECE_SIZE], SDL_Point position, uint8_t color){
     for (int i = 0; i < TETROMINOS_DATA_SIZE; ++i) {
         if (!piece[i]) continue;
 
@@ -495,9 +479,7 @@ drawTetromino(SDL_Renderer *renderer, uint8_t piece[PIECE_SIZE],
     }
 }
 
-void
-printPlaced(uint8_t *placed)
-{
+void printPlaced(uint8_t *placed){
     uint8_t i = 0;
 
     for (int y = 0; y < ARENA_HEIGHT; ++y) {
@@ -513,9 +495,7 @@ printPlaced(uint8_t *placed)
     }
 }
 
-void
-clearRow(uint8_t *placed, uint8_t c)
-{
+void clearRow(uint8_t *placed, uint8_t c){
     uint8_t temp[ARENA_SIZE];
 
     memset(temp, 0, sizeof(uint8_t) * ARENA_SIZE);
@@ -532,9 +512,7 @@ clearRow(uint8_t *placed, uint8_t c)
     memcpy(placed, temp, sizeof(uint8_t) * ARENA_SIZE);
 }
 
-uint8_t
-checkForRowClearing(uint8_t *placed)
-{
+uint8_t checkForRowClearing(uint8_t *placed){
     uint8_t row_count = 0;
     uint8_t lines = 0;
 
@@ -557,9 +535,7 @@ checkForRowClearing(uint8_t *placed)
     return lines;
 }
 
-void
-addToPlaced(uint8_t *placed, uint8_t *piece, SDL_Point position)
-{
+void addToPlaced(uint8_t *placed, uint8_t *piece, SDL_Point position){
     uint8_t pos = getPlacedPosition(position);
 
     for (uint8_t i = 0; i < TETROMINOS_DATA_SIZE; ++i) {
@@ -571,9 +547,7 @@ addToPlaced(uint8_t *placed, uint8_t *piece, SDL_Point position)
     }
 }
 
-uint8_t
-collisionCheck(uint8_t *placed, uint8_t *piece, SDL_Point position)
-{
+uint8_t collisionCheck(uint8_t *placed, uint8_t *piece, SDL_Point position){
     Size size; getPieceSize(piece, &size);
     uint8_t placed_pos = getPlacedPosition(position);
     uint8_t collide = COLLIDE_NONE;
@@ -600,9 +574,7 @@ collisionCheck(uint8_t *placed, uint8_t *piece, SDL_Point position)
     return collide;
 }
 
-void
-pickPiece(uint8_t *piece, uint8_t *color)
-{
+void pickPiece(uint8_t *piece, uint8_t *color){
     const uint8_t tetrominos[TETROMINOS_COUNT]
                                    [PIECE_SIZE] = {
         // each piece has 4 ones
@@ -652,9 +624,7 @@ pickPiece(uint8_t *piece, uint8_t *color)
     *color = piece_colors[((*color) + 1) % PIECE_COLOR_SIZE];
 }
 
-void
-Game_Init(Game *game)
-{
+void Game_Init(Game *game){
     memset(game, 0, sizeof(Game));
 
     END(SDL_Init(SDL_INIT_VIDEO) != 0, "Could not create texture",
@@ -686,8 +656,7 @@ Game_Init(Game *game)
     load_high_scores(game);
 }
 
-void
-drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
+void drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
     for (int x = 0; x < ARENA_WIDTH; ++x) {
         for (int y = 0; y < ARENA_HEIGHT; ++y) {
             uint8_t i = y * ARENA_WIDTH + x;
@@ -708,9 +677,7 @@ drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
     }
 }
 
-static uint8_t
-updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
-{
+static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
     static bool first_update = true;
     if (first_update) {
         update_high_scores(game, current_username, game->score);
@@ -782,9 +749,7 @@ updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
     return UPDATE_LOSE;
 }
 
-static uint8_t
-updateGameOver(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
-{
+static uint8_t updateGameOver(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
     // Reset game state
     game->score = 0;
     game->level = 0;
@@ -798,9 +763,7 @@ updateGameOver(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
     return UPDATE_MAIN;
 }
 
-static uint8_t
-updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
-{
+static uint8_t updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
     static SDL_Point piece_position = {.x = 0, .y = -1};
     static uint8_t fall_speed = 30;
     static uint8_t current_piece[PIECE_SIZE];
@@ -924,9 +887,7 @@ updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown)
     return UPDATE_MAIN;
 }
 
-void
-Game_Update(Game *game, const uint8_t fps)
-{
+void Game_Update(Game *game, const uint8_t fps){
     uint64_t frame = 0;
     bool quit = false;
     bool keydown = false;
@@ -990,9 +951,7 @@ Game_Update(Game *game, const uint8_t fps)
     }
 }
 
-void
-Game_Quit(Game *game)
-{
+void Game_Quit(Game *game){
     TTF_CloseFont(game->lose_font);
     TTF_CloseFont(game->ui_font);
     SDL_DestroyWindow(game->window);
@@ -1001,8 +960,7 @@ Game_Quit(Game *game)
     SDL_Quit();
 }
 
-void Game_Login(Game *game, char *username, size_t username_size)
-{
+void Game_Login(Game *game, char *username, size_t username_size){
     bool quit = false;
     bool enter_pressed = false;
     SDL_StartTextInput();
@@ -1130,9 +1088,7 @@ void Game_Login(Game *game, char *username, size_t username_size)
     printf("Current username: '%s'\n", username);
 }
 
-void
-setColor(SDL_Renderer *renderer, uint8_t color)
-{
+void setColor(SDL_Renderer *renderer, uint8_t color){
     const SDL_Color colors[] = {
         [COLOR_RED] = {.r = 239, .g = 71, .b = 111, .a = 255},    // Soft Red
         [COLOR_GREEN] = {.r = 86, .g = 192, .b = 146, .a = 255},  // Muted Green
@@ -1146,9 +1102,7 @@ setColor(SDL_Renderer *renderer, uint8_t color)
                            colors[color].b, colors[color].a);
 }
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
     Game game;
     char username[50];
 
