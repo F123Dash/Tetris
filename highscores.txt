@@ -1,2 +1,1 @@
-kevin,2380
-kevin,300
+kevin,340

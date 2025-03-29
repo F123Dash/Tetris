@@ -623,12 +623,11 @@ void pickPiece(uint8_t *piece, uint8_t *color){
 
     *color = piece_colors[((*color) + 1) % PIECE_COLOR_SIZE];
 }
-
+//Initailize the game 
 void Game_Init(Game *game){
     memset(game, 0, sizeof(Game));
 
-    END(SDL_Init(SDL_INIT_VIDEO) != 0, "Could not create texture",
-        SDL_GetError());
+    END(SDL_Init(SDL_INIT_VIDEO) != 0, "Could not create texture", SDL_GetError());
 
     END(TTF_Init() != 0, "Could not initialize TTF", TTF_GetError());
 
@@ -638,18 +637,15 @@ void Game_Init(Game *game){
 
     game->ui_font = TTF_OpenFont(FONT, 30);
     if (game->ui_font == NULL) {
-        fprintf(stderr, "Error: Could not open font: %s\n", TTF_GetError());
+        fprintf(stderr, "Could not open font: %s\n", TTF_GetError());
         exit(1);
     }
 
-    game->window = SDL_CreateWindow("tetris", SDL_WINDOWPOS_UNDEFINED, 
-                     SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH_PX, 
-                     SCREEN_HEIGHT_PX, SDL_WINDOW_SHOWN);
+    game->window = SDL_CreateWindow("tetris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH_PX, SCREEN_HEIGHT_PX, SDL_WINDOW_SHOWN);
 
     END(game->window == NULL, "Could not create window", SDL_GetError());
 
-    game->renderer = SDL_CreateRenderer(game->window, 0,
-                                        SDL_RENDERER_SOFTWARE);
+    game->renderer = SDL_CreateRenderer(game->window, 0, SDL_RENDERER_SOFTWARE);
 
     END(game->renderer == NULL, "Could not create renderer", SDL_GetError());
     
