@@ -625,11 +625,11 @@ void pickPiece(uint8_t *piece, uint8_t *color){
 }
 //Initailize the game 
 void Game_Init(Game *game){
-    memset(game, 0, sizeof(Game));
+    memset(game, 0, sizeof(Game));//Clear previous memory of struct
 
-    END(SDL_Init(SDL_INIT_VIDEO) != 0, "Could not create texture", SDL_GetError());
+    END(SDL_Init(SDL_INIT_VIDEO) != 0, "Could not create texture", SDL_GetError());//intializes the SDL_INIT_VIDEO 
 
-    END(TTF_Init() != 0, "Could not initialize TTF", TTF_GetError());
+    END(TTF_Init() != 0, "Could not initialize TTF", TTF_GetError());//initializes SDL_TTF
 
     game->lose_font = TTF_OpenFont(FONT, 50);
 
@@ -641,7 +641,7 @@ void Game_Init(Game *game){
         exit(1);
     }
 
-    game->window = SDL_CreateWindow("tetris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH_PX, SCREEN_HEIGHT_PX, SDL_WINDOW_SHOWN);
+    game->window = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH_PX, SCREEN_HEIGHT_PX, SDL_WINDOW_SHOWN);
 
     END(game->window == NULL, "Could not create window", SDL_GetError());
 
@@ -882,6 +882,8 @@ static uint8_t updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keyd
     drawPlaced(game->placed, game->renderer);
     return UPDATE_MAIN;
 }
+
+//Main Game Loop
 
 void Game_Update(Game *game, const uint8_t fps){
     uint64_t frame = 0;
