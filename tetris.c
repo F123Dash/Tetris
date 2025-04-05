@@ -168,13 +168,13 @@ void drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *
     SDL_FreeSurface(surface);
     SDL_DestroyTexture(texture);
 }
-
+//Reads the high scores stored in a file
 void load_high_scores(Game *game) {
     FILE *file = fopen(HIGH_SCORE_FILE, "r");
     game->num_high_scores = 0;
     
     if (file != NULL) {
-        while (game->num_high_scores < MAX_HIGH_SCORES && fscanf(file, "%lu\n", game->high_scores[game->num_high_scores].name, &game->high_scores[game->num_high_scores].score) == 2) {
+        while (game->num_high_scores < MAX_HIGH_SCORES && fscanf(file, "%49[^,],%lu\n", game->high_scores[game->num_high_scores].name, &game->high_scores[game->num_high_scores].score) == 2) {
             game->num_high_scores++;
         }
         fclose(file);
@@ -185,9 +185,7 @@ void save_high_scores(Game *game) {
     FILE *file = fopen(HIGH_SCORE_FILE, "w");
     if (file != NULL) {
         for (int i = 0; i < game->num_high_scores; i++) {
-            fprintf(file, "%s,%lu\n", 
-                    game->high_scores[i].name, 
-                    game->high_scores[i].score);
+            fprintf(file, "%s,%lu\n", game->high_scores[i].name, game->high_scores[i].score);
         }
         fclose(file);
     }
