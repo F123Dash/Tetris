@@ -629,9 +629,9 @@ void Game_Init(Game *game){
 
     END(SDL_Init(SDL_INIT_VIDEO) != 0, "Could not create texture", SDL_GetError());//intializes the SDL_INIT_VIDEO 
 
-    END(TTF_Init() != 0, "Could not initialize TTF", TTF_GetError());//initializes SDL_TTF
+    END(TTF_Init() != 0, "Could not initialize", TTF_GetError());//Initializes SDL_TTF
 
-    game->lose_font = TTF_OpenFont(FONT, 50);
+    game->lose_font = TTF_OpenFont(FONT, 50);//Load Fonts 
 
     END(game->lose_font == NULL, "Could not open font", TTF_GetError());
 
