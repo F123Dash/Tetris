@@ -390,7 +390,7 @@ int findPoints(uint8_t level, uint8_t lines){
 
 void addToArena(uint8_t *placed, uint8_t i){
     // bounds checking
-    if (i < ARENA_SIZE && i >= 0) placed[i] = 1;
+    if (i < ARENA_SIZE && i >= 0)  placed[i] = 1;
 }
 
 uint8_t getPlacedPosition(SDL_Point pos){
