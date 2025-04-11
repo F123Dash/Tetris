@@ -190,7 +190,7 @@ void save_high_scores(Game *game) {
         fclose(file);
     }
 }
-
+// updating the high scores list when a player achieves a new score
 void update_high_scores(Game *game, const char *name, uint64_t score) {
     // Find position to insert new score
     int pos = game->num_high_scores;
@@ -200,26 +200,22 @@ void update_high_scores(Game *game, const char *name, uint64_t score) {
             break;
         }
     }
-    
     // If score is high enough to be in top 3
     if (pos < MAX_HIGH_SCORES) {
         // Shift lower scores down
         for (int i = MIN(game->num_high_scores, MAX_HIGH_SCORES - 1); i > pos; i--) {
             memcpy(&game->high_scores[i], &game->high_scores[i-1], sizeof(HighScore));
         }
-        
         // Insert new score
         strncpy(game->high_scores[pos].name, name, sizeof(game->high_scores[pos].name) - 1);
         game->high_scores[pos].score = score;
-        
-        if (game->num_high_scores < MAX_HIGH_SCORES) {
+        if (game->num_high_scores < MAX_HIGH_SCORES){
             game->num_high_scores++;
         }
-        
         save_high_scores(game);
     }
 }
-
+//Rendering the high scores screen in the Tetris game
 void draw_high_scores(Game *game) {
     // Draw semi-transparent background overlay
     SDL_Rect overlay = {
@@ -280,16 +276,10 @@ void draw_high_scores(Game *game) {
             .x = SCREEN_WIDTH_PX / 2,
             .y = start_y + (i * spacing)
         };
-
         // Format score with proper spacing and alignment
-        sprintf(score_text, "#%d  %-20s %8lu", 
-                i + 1,
-                game->high_scores[i].name,
-                game->high_scores[i].score);
-
+        sprintf(score_text, "#%d  %-20s %8lu", i + 1, game->high_scores[i].name, game->high_scores[i].score);
         drawText(game->renderer, game->ui_font, score_text, score_pos);
     }
-
     // Show message if no high scores
     if (game->num_high_scores == 0) {
         SDL_Point no_scores_pos = {
@@ -298,7 +288,6 @@ void draw_high_scores(Game *game) {
         };
         drawText(game->renderer, game->ui_font, "No high scores", no_scores_pos);
     }
-
     // Draw instructions
     SDL_Point instructions_pos = {
         .x = SCREEN_WIDTH_PX / 2,
@@ -306,17 +295,17 @@ void draw_high_scores(Game *game) {
     };
     drawText(game->renderer, game->ui_font, "Press SPACE to continue", instructions_pos);
 }
-
+//
 static uint8_t updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
     SDL_Point title_point = {
         .x = SCREEN_WIDTH_PX / 2,
-        .y = SCREEN_HEIGHT_PX / 2 - 160  // Moved up to make room
+        .y = SCREEN_HEIGHT_PX / 2 - 160 
     };
     SDL_Point resume_point = {
         .x = SCREEN_WIDTH_PX / 2,
         .y = SCREEN_HEIGHT_PX / 2 - 80
     };
-    SDL_Point menu_point = {  // New menu option
+    SDL_Point menu_point = {
         .x = SCREEN_WIDTH_PX / 2,
         .y = SCREEN_HEIGHT_PX / 2
     };
@@ -324,7 +313,6 @@ static uint8_t updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool key
         .x = SCREEN_WIDTH_PX / 2,
         .y = SCREEN_HEIGHT_PX / 2 + 80
     };
-
     // Add a semi-transparent overlay
     SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 200);
     SDL_Rect pause_overlay = {
@@ -364,19 +352,16 @@ static uint8_t updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool key
         switch (key) {
             case SDLK_r: // Resume
                 return UPDATE_MAIN;
-
             case SDLK_m: // Return to main menu
                 return UPDATE_GAME_OVER;  // This will trigger the login screen
-
             case SDLK_e: // Exit game completely
                 Game_Quit(game);
                 exit(0);
         }
     }
-
-    return UPDATE_PAUSE;
+    return UPDATE_PAUSE;//if no key is pressed the game state is kept same
 }
-
+//calculate score based on current level
 int findPoints(uint8_t level, uint8_t lines){
     switch (lines) {
         case 1: return 40 * (level + 1);
@@ -384,57 +369,53 @@ int findPoints(uint8_t level, uint8_t lines){
         case 3: return 300 * (level + 1);
         case 4: return 1200 * (level + 1);
     }
-
     return 0;
 }
-
+//marking a specific position in game as occupied
 void addToArena(uint8_t *placed, uint8_t i){
-    // bounds checking
-    if (i < ARENA_SIZE && i >= 0)  placed[i] = 1;
+    if (i < ARENA_SIZE && i >= 0){
+        placed[i] = 1;
+        }
 }
-
+//calculates the index in the placed array coressponding to a given 2D position
 uint8_t getPlacedPosition(SDL_Point pos){
     uint8_t i = pos.y * ARENA_WIDTH + pos.x;
     return i < ARENA_SIZE ? i : ARENA_SIZE - 1;
 }
-
+//converting a 1D index to its coressponding 2D position
 void getXY(uint8_t i, int *x, int *y) {
     *x = i % PIECE_WIDTH;
     *y = floor((float)i / PIECE_HEIGHT);
 }
-
+//calculates dimensions of a Tetromino piece
 void getPieceSize(uint8_t *piece, Size *size){
     memset(size, 0, sizeof(Size));
 
     bool foundStartx = false;
     bool foundStarty = false;
-
+    //calclulate the width and starting X-offset 
     for (uint8_t x = 0; x < PIECE_WIDTH; ++x) {
         for (uint8_t y = 0; y < PIECE_HEIGHT; ++y) {
             uint8_t i = y * PIECE_WIDTH + x;
-
             if (piece[i]) {
                 if (!foundStartx) {
                     size->start_x = x;
                     foundStartx = true;
                 }
-
                 size->w++;
                 break;
             }
         }
     }
-
+    //calclulates the height and starting Y-offset
     for (uint8_t y = 0; y < PIECE_HEIGHT; ++y) {
         for (uint8_t x = 0; x < PIECE_WIDTH; ++x) {
             uint8_t i = y * PIECE_WIDTH + x;
-
             if (piece[i]) {
                 if (!foundStarty) {
                     size->start_y = y;
                     foundStarty = true;
                 }
-
                 size->h++;
                 break;
             }
@@ -444,14 +425,11 @@ void getPieceSize(uint8_t *piece, Size *size){
 
 void rotatePiece(uint8_t *piece, uint8_t *rotated){
     memset(rotated, 0, sizeof(uint8_t) * PIECE_SIZE);
-
     uint8_t i = 0;
-
     // 90 degrees
     for (int x = 0; x < PIECE_HEIGHT; ++x) {
         for (int y = PIECE_WIDTH - 1; y >= 0; --y) {
             uint8_t j = y * PIECE_WIDTH + x;
-
             rotated[i] = piece[j];
             ++i;
         }
