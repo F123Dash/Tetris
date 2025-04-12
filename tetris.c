@@ -36,7 +36,7 @@ void Game_Login(Game *game, char *username, size_t username_size);
 #define PIECE_COLOR_SIZE 4U
 #define ARENA_PADDING_TOP 2U
 #define FONT "./fonts/CC_Wild_Words_Roman.ttf"
-#define MAX_HIGH_SCORES 3
+#define MAX_HIGH_SCORES 4
 #define HIGH_SCORE_FILE "highscores.txt"
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define END(check, str1, str2) \
@@ -202,7 +202,7 @@ void draw_high_scores(Game *game) {
         .x = SCREEN_WIDTH_PX / 4,
         .y = SCREEN_HEIGHT_PX / 4,
         .w = SCREEN_WIDTH_PX / 2,
-        .h = SCREEN_HEIGHT_PX / 2
+        .h = SCREEN_HEIGHT_PX / 2 + 50
     };
     // Draw border glow
     SDL_Rect glow = {
@@ -235,7 +235,7 @@ void draw_high_scores(Game *game) {
     int start_y = title_pos.y + 100;
     int spacing = 60;
     char score_text[256];
-    for (int i = 0; i < game->num_high_scores && i < 3; i++) {
+    for (int i = 0; i < game->num_high_scores && i < 4; i++) {
         SDL_Point score_pos = {
             .x = SCREEN_WIDTH_PX / 2,
             .y = start_y + (i * spacing)
@@ -255,7 +255,7 @@ void draw_high_scores(Game *game) {
     // Draw instructions
     SDL_Point instructions_pos = {
         .x = SCREEN_WIDTH_PX / 2,
-        .y = container.y + container.h - 50
+        .y = container.y + container.h - 40
     };
     drawText(game->renderer, game->ui_font, "Press SPACE to continue", instructions_pos);
 }
@@ -570,15 +570,15 @@ void drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
     for (int x = 0; x < ARENA_WIDTH; ++x) {
         for (int y = 0; y < ARENA_HEIGHT; ++y) {
             uint8_t i = y * ARENA_WIDTH + x;
-
-            if (!placed[i]) continue;
-
+            if (!placed[i]) {
+                continue;
+                }
             SDL_Rect rect = {
                 .x = (int)(x * (int)BLOCK_SIZE_PX) + (int)ARENA_PADDING_PX,
                 .y = (int)(y - ARENA_PADDING_TOP) * (int)BLOCK_SIZE_PX,
-                .w = BLOCK_SIZE_PX, .h = BLOCK_SIZE_PX
+                .w = BLOCK_SIZE_PX, 
+                .h = BLOCK_SIZE_PX
             };
-
             setColor(renderer, COLOR_GREY);
             SDL_RenderFillRect(renderer, &rect);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -586,15 +586,13 @@ void drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
         }
     }
 }
-
+//Game Over
 static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
     static bool first_update = true;
     if (first_update) {
         update_high_scores(game, current_username, game->score);
         first_update = false;
     }
-
-    // Draw game over screen
     SDL_Rect overlay = {
         .x = 0,
         .y = 0,
@@ -603,16 +601,12 @@ static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keyd
     };
     SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 200);
     SDL_RenderFillRect(game->renderer, &overlay);
-
-    // Draw game over container
     SDL_Rect container = {
         .x = SCREEN_WIDTH_PX / 4,
         .y = 50,
         .w = SCREEN_WIDTH_PX / 2,
         .h = 150
     };
-
-    // Draw border glow
     SDL_Rect glow = {
         .x = container.x - 4,
         .y = container.y - 4,
@@ -621,19 +615,13 @@ static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keyd
     };
     setColor(game->renderer, COLOR_BLUE);
     SDL_RenderFillRect(game->renderer, &glow);
-
-    // Draw container background
     setColor(game->renderer, COLOR_BLACK);
     SDL_RenderFillRect(game->renderer, &container);
-
-    // Draw "Game Over" text
     SDL_Point title_pos = {
         .x = SCREEN_WIDTH_PX / 2,
         .y = container.y + 50
     };
     drawText(game->renderer, game->lose_font, "GAME OVER", title_pos);
-
-    // Draw final score
     char score_text[255];
     sprintf(score_text, "Final Score: %lu", game->score);
     SDL_Point score_pos = {
@@ -641,21 +629,17 @@ static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keyd
         .y = container.y + 100
     };
     drawText(game->renderer, game->ui_font, score_text, score_pos);
-
-    // Draw high scores
     draw_high_scores(game);
-
     if (keydown) {
         switch (key) {
             case SDLK_SPACE:
-                first_update = true;  // Reset for next game
+                first_update = true;
                 return UPDATE_GAME_OVER;
             case SDLK_ESCAPE:
                 Game_Quit(game);
                 exit(0);
         }
     }
-
     return UPDATE_LOSE;
 }
 
