@@ -35,11 +35,10 @@ void Game_Login(Game *game, char *username, size_t username_size);
 #define TETROMINOS_COUNT 7U
 #define PIECE_COLOR_SIZE 4U
 #define ARENA_PADDING_TOP 2U
-#define FONT "./fonts/NotoSansMono-Regular.ttf"
+#define FONT "./fonts/CC Wild Words Roman.ttf"
 #define MAX_HIGH_SCORES 3
 #define HIGH_SCORE_FILE "highscores.txt"
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
-
 #define END(check, str1, str2) \
     if (check) { \
         assert(check); \
@@ -47,33 +46,23 @@ void Game_Login(Game *game, char *username, size_t username_size);
         exit(1); \
     } \
 
-
-enum {PIECE_I, PIECE_J, PIECE_L, PIECE_O, PIECE_S, PIECE_T, PIECE_Z, PIECE_COUNT};  // Differnet Types of Tetris Pieces(Tetrominos)
-
-enum {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE, COLOR_GREY, COLOR_BLACK, COLOR_SIZE};  //Represents the Colors for Tetrominos and the windows
-
-enum {COLLIDE_NONE = 0, COLLIDE_LEFT = 1 << 0, COLLIDE_RIGHT = 1 << 1, COLLIDE_TOP = 1 << 2, COLLIDE_BOTTOM = 1 << 3, COLLIDE_PIECE = 1 << 4};  //Represents types of collisions that can occur
-
-enum {UPDATE_MAIN, UPDATE_LOSE, UPDATE_PAUSE, UPDATE_GAME_OVER}; //Represents the different states of game
-
+enum {PIECE_I, PIECE_J, PIECE_L, PIECE_O, PIECE_S, PIECE_T, PIECE_Z, PIECE_COUNT};
+enum {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE, COLOR_GREY, COLOR_BLACK, COLOR_SIZE};
+enum {COLLIDE_NONE = 0, COLLIDE_LEFT = 1 << 0, COLLIDE_RIGHT = 1 << 1, COLLIDE_TOP = 1 << 2, COLLIDE_BOTTOM = 1 << 3, COLLIDE_PIECE = 1 << 4};
+enum {UPDATE_MAIN, UPDATE_LOSE, UPDATE_PAUSE, UPDATE_GAME_OVER};
 //Size of a Single Tetris Piece 
-
 typedef struct _Size {
     int w;
     int h;
     uint8_t start_x;
     uint8_t start_y;
 } Size;
-
 //Stores info about a Player's HighScore
-
 typedef struct _HighScore {
     char name[50];
     uint64_t score;
 } HighScore;
-
 // Represents Overall State of the Game
-
 typedef struct _Game {
     uint8_t level;                           // current level (affect the difficulty)
     uint64_t score;                          // current score
@@ -85,21 +74,16 @@ typedef struct _Game {
     HighScore high_scores[MAX_HIGH_SCORES];  // An array to store top high scores 
     int num_high_scores;                     // The number of high scores currently stored
 } Game;
-
 typedef uint8_t (*Update_callback)(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown);  //Defines a function pointer that updates the game based on the current frame, user input etc.
-
 static char current_username[50];  // Global variable to store current username
-
 //Function based on rendering text on screen
 void drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Point point){
     if (text == NULL || strlen(text) == 0) {
         fprintf(stderr, "Text is empty");
         return;
     }
-
     int w = 0;
     int h = 0;
-    
     TTF_SizeText(font, text, &w, &h);
     SDL_Color font_color = {.r = 255, .g = 255, .b = 255, .a = 255};
     SDL_Surface *surface = TTF_RenderText_Solid(font, text, font_color);
@@ -113,54 +97,42 @@ void drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Poin
     };
     //Convert thr suraface into a texture (This step is important because SDL2 renders textures, not surfaces)
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-
     END(texture == NULL, "Could not create texture", SDL_GetError());
     //Renders the texture onto screen
     SDL_RenderCopy(renderer, texture, NULL, &rect);
     SDL_FreeSurface(surface);
     SDL_DestroyTexture(texture);
 }
-
 // Add a new function for drawing text with background
 void drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Point point){
     if (text == NULL || strlen(text) == 0) {
         fprintf(stderr, "Text is empty");
         return;
     }
-
     int w = 0;
     int h = 0;
     int padding = 12;
-
     TTF_SizeText(font, text, &w, &h);
-
     SDL_Color font_color = {.r = 255, .g = 255, .b = 255, .a = 255};
     SDL_Surface *surface = TTF_RenderText_Solid(font, text, font_color);
-
     END(surface == NULL, "Could not create text surface", SDL_GetError());
-
     SDL_Rect rect = {
         .x = point.x - (w / 2),
         .y = point.y - (h / 2),
         .w = w,
         .h = h,
     };
-
     SDL_Rect text_background = {
         .x = rect.x - padding,
         .y = rect.y - padding,
         .w = rect.w + padding * 2,
         .h = rect.h + padding * 2
     };
-
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-
     END(texture == NULL, "Could not create texture", SDL_GetError());
-
     // Add a gradient effect to the background
     SDL_SetRenderDrawColor(renderer, 40, 44, 52, 255);
     SDL_RenderFillRect(renderer, &text_background);
-    
     // Add a border
     SDL_SetRenderDrawColor(renderer, 65, 131, 215, 100);
     SDL_RenderDrawRect(renderer, &text_background);
@@ -171,8 +143,7 @@ void drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *
 //Reads the high scores stored in a file
 void load_high_scores(Game *game) {
     FILE *file = fopen(HIGH_SCORE_FILE, "r");
-    game->num_high_scores = 0;
-    
+    game->num_high_scores = 0;    
     if (file != NULL) {
         while (game->num_high_scores < MAX_HIGH_SCORES && fscanf(file, "%49[^,],%lu\n", game->high_scores[game->num_high_scores].name, &game->high_scores[game->num_high_scores].score) == 2) {
             game->num_high_scores++;
@@ -226,7 +197,6 @@ void draw_high_scores(Game *game) {
     };
     SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 200);
     SDL_RenderFillRect(game->renderer, &overlay);
-
     // Draw high scores container
     SDL_Rect container = {
         .x = SCREEN_WIDTH_PX / 4,
@@ -234,7 +204,6 @@ void draw_high_scores(Game *game) {
         .w = SCREEN_WIDTH_PX / 2,
         .h = SCREEN_HEIGHT_PX / 2
     };
-
     // Draw border glow
     SDL_Rect glow = {
         .x = container.x - 4,
@@ -244,18 +213,15 @@ void draw_high_scores(Game *game) {
     };
     setColor(game->renderer, COLOR_BLUE);
     SDL_RenderFillRect(game->renderer, &glow);
-
     // Draw container background
     setColor(game->renderer, COLOR_BLACK);
     SDL_RenderFillRect(game->renderer, &container);
-
     // Draw title
     SDL_Point title_pos = {
         .x = SCREEN_WIDTH_PX / 2,
         .y = container.y + 50
     };
     drawText(game->renderer, game->lose_font, "HIGH SCORES", title_pos);
-
     // Draw divider line
     SDL_Rect divider = {
         .x = container.x + 50,
@@ -265,12 +231,10 @@ void draw_high_scores(Game *game) {
     };
     setColor(game->renderer, COLOR_BLUE);
     SDL_RenderFillRect(game->renderer, &divider);
-
     // Draw scores with rank and proper spacing
     int start_y = title_pos.y + 100;
     int spacing = 60;
     char score_text[256];
-
     for (int i = 0; i < game->num_high_scores && i < 3; i++) {
         SDL_Point score_pos = {
             .x = SCREEN_WIDTH_PX / 2,
@@ -330,7 +294,6 @@ static uint8_t updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool key
         .w = SCREEN_WIDTH_PX / 2,
         .h = SCREEN_HEIGHT_PX / 2
     };
-    
     // Add a subtle glow effect
     SDL_Rect glow = pause_container;
     glow.x -= 4;
@@ -339,15 +302,12 @@ static uint8_t updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool key
     glow.h += 8;
     setColor(game->renderer, COLOR_BLUE);
     SDL_RenderFillRect(game->renderer, &glow);
-    
     setColor(game->renderer, COLOR_BLACK);
     SDL_RenderFillRect(game->renderer, &pause_container);
-
     drawText(game->renderer, game->lose_font, "PAUSED", title_point);
     drawText(game->renderer, game->ui_font, "Press R to Resume", resume_point);
     drawText(game->renderer, game->ui_font, "Press M for Main Menu", menu_point);
     drawText(game->renderer, game->ui_font, "Press E to Exit Game", exit_point);
-
     if (keydown) {
         switch (key) {
             case SDLK_r: // Resume
@@ -482,55 +442,55 @@ void clearRow(uint8_t *placed, uint8_t c){
     }
     memcpy(placed, temp, sizeof(uint8_t) * ARENA_SIZE);
 }
-
+//detecting and clearing fully occupied rows in arena 
 uint8_t checkForRowClearing(uint8_t *placed){
     uint8_t row_count = 0;
     uint8_t lines = 0;
-
     for (uint8_t y = 0; y < ARENA_HEIGHT; ++y) {
         for (uint8_t x = 0; x < ARENA_WIDTH; ++x) {
-            if (x == 0) row_count = 0;
-
+            if (x == 0) {
+                row_count = 0;
+                }
             uint8_t i = y * ARENA_WIDTH + x;
-
-            if (placed[i]) row_count++;
-
+            if (placed[i]) {
+                row_count++;
+                }
             if ((x == ARENA_WIDTH - 1) && (row_count == ARENA_WIDTH)) {
                 clearRow(placed, y);
                 lines++;
             }
-
         }
     }
-
     return lines;
 }
-
+//Adding a Tetromino piece to placed array
 void addToPlaced(uint8_t *placed, uint8_t *piece, SDL_Point position){
     uint8_t pos = getPlacedPosition(position);
-
     for (uint8_t i = 0; i < TETROMINOS_DATA_SIZE; ++i) {
-        int x, y; getXY(i, &x, &y);
+        int x, y; 
+        getXY(i, &x, &y);
         uint8_t piece_i = y * PIECE_WIDTH + x;
         uint8_t placed_i = y * ARENA_WIDTH + x;
-
-        if (piece[piece_i]) addToArena(placed, pos + placed_i);
+        if (piece[piece_i]) {
+                addToArena(placed, pos + placed_i);
+        }
     }
 }
-
+//Detecting collision between pieces and boundary
 uint8_t collisionCheck(uint8_t *placed, uint8_t *piece, SDL_Point position){
-    Size size; getPieceSize(piece, &size);
+    Size size; 
+    getPieceSize(piece, &size);
     uint8_t placed_pos = getPlacedPosition(position);
     uint8_t collide = COLLIDE_NONE;
-
-    if (position.x < -size.start_x) collide |= COLLIDE_LEFT;
-
-    if (position.x + size.start_x + size.w > ARENA_WIDTH)
+    if (position.x < -size.start_x) {
+        collide |= COLLIDE_LEFT;
+        }
+    if (position.x + size.start_x + size.w > ARENA_WIDTH){
         collide |= COLLIDE_RIGHT;
-
-    if (position.y + size.start_y + size.h > ARENA_HEIGHT)
+        }
+    if (position.y + size.start_y + size.h > ARENA_HEIGHT){
         collide |= COLLIDE_BOTTOM;
-
+        }
     for (uint8_t y = 0; y < PIECE_HEIGHT; ++y) {
         for (uint8_t x = 0; x < PIECE_WIDTH; ++x) {
             uint8_t piece_i = y * PIECE_WIDTH + x;
@@ -541,14 +501,12 @@ uint8_t collisionCheck(uint8_t *placed, uint8_t *piece, SDL_Point position){
             }
         }
     }
-
     return collide;
 }
-
+//Selecting Random Tetromino and assign them color
 void pickPiece(uint8_t *piece, uint8_t *color){
     const uint8_t tetrominos[TETROMINOS_COUNT]
                                    [PIECE_SIZE] = {
-        // each piece has 4 ones
         [PIECE_I] = {0,0,0,0,
                      1,1,1,1,
                      0,0,0,0,
@@ -584,42 +542,27 @@ void pickPiece(uint8_t *piece, uint8_t *color){
                      0,1,1,0,
                      0,0,0,0},
     };
-
-    const uint8_t piece_colors[PIECE_COLOR_SIZE] = {COLOR_RED, COLOR_GREEN,
-                                                    COLOR_BLUE, COLOR_ORANGE};
-
+    const uint8_t piece_colors[PIECE_COLOR_SIZE] = {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE};
     uint8_t id = (float)((float)rand() / (float)RAND_MAX) * PIECE_COUNT;
-
     memcpy(piece, &tetrominos[id], sizeof(uint8_t) * PIECE_SIZE);
-
     *color = piece_colors[((*color) + 1) % PIECE_COLOR_SIZE];
 }
 //Initailize the game 
 void Game_Init(Game *game){
-    memset(game, 0, sizeof(Game));//Clear previous memory of struct
-
-    END(SDL_Init(SDL_INIT_VIDEO) != 0, "Could not create texture", SDL_GetError());//intializes the SDL_INIT_VIDEO 
-
-    END(TTF_Init() != 0, "Could not initialize", TTF_GetError());//Initializes SDL_TTF
-
-    game->lose_font = TTF_OpenFont(FONT, 50);//Load Fonts 
-
+    memset(game, 0, sizeof(Game));
+    END(SDL_Init(SDL_INIT_VIDEO) != 0, "Could not create texture", SDL_GetError());
+    END(TTF_Init() != 0, "Could not initialize", TTF_GetError());
+    game->lose_font = TTF_OpenFont(FONT, 50);
     END(game->lose_font == NULL, "Could not open font", TTF_GetError());
-
     game->ui_font = TTF_OpenFont(FONT, 30);
     if (game->ui_font == NULL) {
         fprintf(stderr, "Could not open font: %s\n", TTF_GetError());
         exit(1);
     }
-
     game->window = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH_PX, SCREEN_HEIGHT_PX, SDL_WINDOW_SHOWN);
-
     END(game->window == NULL, "Could not create window", SDL_GetError());
-
     game->renderer = SDL_CreateRenderer(game->window, 0, SDL_RENDERER_SOFTWARE);
-
     END(game->renderer == NULL, "Could not create renderer", SDL_GetError());
-    
     load_high_scores(game);
 }
 
