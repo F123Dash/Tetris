@@ -35,7 +35,7 @@ void Game_Login(Game *game, char *username, size_t username_size);
 #define TETROMINOS_COUNT 7U
 #define PIECE_COLOR_SIZE 4U
 #define ARENA_PADDING_TOP 2U
-#define FONT "./fonts/CC Wild Words Roman.ttf"
+#define FONT "./fonts/CC_Wild_Words_Roman.ttf"
 #define MAX_HIGH_SCORES 3
 #define HIGH_SCORE_FILE "highscores.txt"
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
