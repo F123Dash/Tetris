@@ -187,78 +187,60 @@ void update_high_scores(Game *game, const char *name, uint64_t score) {
     }
 }
 //Rendering the high scores screen in the Tetris game
-void draw_high_scores(Game *game) {
-    // Draw semi-transparent background overlay
-    SDL_Rect overlay = {
-        .x = 0,
-        .y = 0,
-        .w = SCREEN_WIDTH_PX,
-        .h = SCREEN_HEIGHT_PX
-    };
-    SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 200);
-    SDL_RenderFillRect(game->renderer, &overlay);
-    // Draw high scores container
-    SDL_Rect container = {
-        .x = SCREEN_WIDTH_PX / 4,
-        .y = SCREEN_HEIGHT_PX / 4,
-        .w = SCREEN_WIDTH_PX / 2,
-        .h = SCREEN_HEIGHT_PX / 2 + 40
-    };
-    // Draw border glow
-    SDL_Rect glow = {
-        .x = container.x - 4,
-        .y = container.y - 4,
-        .w = container.w + 8,
-        .h = container.h + 8
-    };
-    setColor(game->renderer, COLOR_BLUE);
-    SDL_RenderFillRect(game->renderer, &glow);
-    // Draw container background
-    setColor(game->renderer, COLOR_BLACK);
-    SDL_RenderFillRect(game->renderer, &container);
-    // Draw title
-    SDL_Point title_pos = {
-        .x = SCREEN_WIDTH_PX / 2,
-        .y = container.y + 50
-    };
-    drawText(game->renderer, game->lose_font, "HIGH SCORES", title_pos);
-    // Draw divider line
-    SDL_Rect divider = {
-        .x = container.x + 50,
-        .y = title_pos.y + 50,
-        .w = container.w - 100,
-        .h = 2
-    };
-    setColor(game->renderer, COLOR_BLUE);
-    SDL_RenderFillRect(game->renderer, &divider);
-    // Draw scores with rank and proper spacing
-    int start_y = title_pos.y + 100;
-    int spacing = 60;
-    char score_text[256];
-    for (int i = 0; i < game->num_high_scores && i < 4; i++) {
-        SDL_Point score_pos = {
-            .x = SCREEN_WIDTH_PX / 2,
-            .y = start_y + (i * spacing)
+void draw_high_scores(Game *game, SDL_Rect game_over_box) {
+        SDL_Rect container = {
+            .x = SCREEN_WIDTH_PX / 4,
+            .y = game_over_box.y + game_over_box.h + 20, // Position below the "Game Over" box
+            .w = SCREEN_WIDTH_PX / 2,
+            .h = SCREEN_HEIGHT_PX / 2
         };
-        // Format score with proper spacing and alignment
-        sprintf(score_text, "#%d  %-20s %8lu", i + 1, game->high_scores[i].name, game->high_scores[i].score);
-        drawText(game->renderer, game->ui_font, score_text, score_pos);
-    }
-    // Show message if no high scores
-    if (game->num_high_scores == 0) {
-        SDL_Point no_scores_pos = {
-            .x = SCREEN_WIDTH_PX / 2,
-            .y = start_y + spacing
+    
+        // Draw border glow
+        SDL_Rect glow = {
+            .x = container.x - 4,
+            .y = container.y - 4,
+            .w = container.w + 8,
+            .h = container.h + 8
         };
-        drawText(game->renderer, game->ui_font, "No high scores", no_scores_pos);
+        setColor(game->renderer, COLOR_BLUE);
+        SDL_RenderFillRect(game->renderer, &glow);
+        // Draw container background
+        setColor(game->renderer, COLOR_BLACK);
+        SDL_RenderFillRect(game->renderer, &container);
+        SDL_Point title_pos = {
+            .x = SCREEN_WIDTH_PX / 2,
+            .y = container.y + 30
+        };
+        drawText(game->renderer, game->lose_font, "HIGH SCORES", title_pos);
+    
+        // Draw scores with rank and proper spacing
+        int start_y = title_pos.y + 100;
+        int spacing = 60;
+        char score_text[256];
+        for (int i = 0; i < game->num_high_scores && i < MAX_HIGH_SCORES; i++) {
+            SDL_Point score_pos = {
+                .x = SCREEN_WIDTH_PX / 2,
+                .y = start_y + (i * spacing)
+            };
+            sprintf(score_text, "#%d  %-20s %8lu", i + 1, game->high_scores[i].name, game->high_scores[i].score);
+            drawText(game->renderer, game->ui_font, score_text, score_pos);
+        }
+    
+        // Show message if no high scores
+        if (game->num_high_scores == 0) {
+            SDL_Point no_scores_pos = {
+                .x = SCREEN_WIDTH_PX / 2,
+                .y = start_y + spacing
+            };
+            drawText(game->renderer, game->ui_font, "No high scores", no_scores_pos);
+        }
+        SDL_Point instructions_pos = {
+                .x = SCREEN_WIDTH_PX / 2,
+                .y = container.y + container.h - 40
+            };
+            drawText(game->renderer, game->ui_font, "Press SPACE to continue", instructions_pos);
     }
-    // Draw instructions
-    SDL_Point instructions_pos = {
-        .x = SCREEN_WIDTH_PX / 2,
-        .y = container.y + container.h - 40
-    };
-    drawText(game->renderer, game->ui_font, "Press SPACE to continue", instructions_pos);
-}
+    
 //rendering the pause menu
 static uint8_t updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
     SDL_Point title_point = {
@@ -570,15 +552,15 @@ void drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
     for (int x = 0; x < ARENA_WIDTH; ++x) {
         for (int y = 0; y < ARENA_HEIGHT; ++y) {
             uint8_t i = y * ARENA_WIDTH + x;
-
-            if (!placed[i]) continue;
-
+            if (!placed[i]) {
+                continue;
+            }
             SDL_Rect rect = {
                 .x = (int)(x * (int)BLOCK_SIZE_PX) + (int)ARENA_PADDING_PX,
                 .y = (int)(y - ARENA_PADDING_TOP) * (int)BLOCK_SIZE_PX,
-                .w = BLOCK_SIZE_PX, .h = BLOCK_SIZE_PX
+                .w = BLOCK_SIZE_PX, 
+                .h = BLOCK_SIZE_PX
             };
-
             setColor(renderer, COLOR_GREY);
             SDL_RenderFillRect(renderer, &rect);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -587,8 +569,9 @@ void drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
     }
 }
 
-static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
+static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown) {
     static bool first_update = true;
+
     if (first_update) {
         update_high_scores(game, current_username, game->score);
         first_update = false;
@@ -631,7 +614,7 @@ static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keyd
         .x = SCREEN_WIDTH_PX / 2,
         .y = container.y + 50
     };
-    drawText(game->renderer, game->lose_font, "GAME OVER", title_pos);
+    drawText(game->renderer, game->lose_font, "GAME OVER!!", title_pos);
 
     // Draw final score
     char score_text[255];
@@ -642,8 +625,8 @@ static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keyd
     };
     drawText(game->renderer, game->ui_font, score_text, score_pos);
 
-    // Draw high scores
-    draw_high_scores(game);
+    // Draw high scores below the "Game Over" box
+    draw_high_scores(game, container);
 
     if (keydown) {
         switch (key) {
