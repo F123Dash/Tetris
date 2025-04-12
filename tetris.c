@@ -966,9 +966,9 @@ void Game_Login(Game *game, char *username, size_t username_size){
         
         char display_text[256];
         if (strlen(username) == 0) {
-            strcpy(display_text, "Enter Your Name: _");
+            strcpy(display_text, "Enter Your Name:  ");
         } else {
-            sprintf(display_text, " %s%s", username, show_cursor ? "_" : "");
+            sprintf(display_text, " %s%s", username, show_cursor ? "" : "");
         }
         
         SDL_Point text_position = {
