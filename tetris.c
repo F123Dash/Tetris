@@ -36,7 +36,7 @@ void Game_Login(Game *game, char *username, size_t username_size);
 #define PIECE_COLOR_SIZE 4U
 #define ARENA_PADDING_TOP 2U
 #define FONT "./fonts/CC_Wild_Words_Roman.ttf"
-#define MAX_HIGH_SCORES 3
+#define MAX_HIGH_SCORES 4
 #define HIGH_SCORE_FILE "highscores.txt"
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define END(check, str1, str2) \
@@ -202,7 +202,7 @@ void draw_high_scores(Game *game) {
         .x = SCREEN_WIDTH_PX / 4,
         .y = SCREEN_HEIGHT_PX / 4,
         .w = SCREEN_WIDTH_PX / 2,
-        .h = SCREEN_HEIGHT_PX / 2
+        .h = SCREEN_HEIGHT_PX / 2 + 40
     };
     // Draw border glow
     SDL_Rect glow = {
@@ -235,7 +235,7 @@ void draw_high_scores(Game *game) {
     int start_y = title_pos.y + 100;
     int spacing = 60;
     char score_text[256];
-    for (int i = 0; i < game->num_high_scores && i < 3; i++) {
+    for (int i = 0; i < game->num_high_scores && i < 4; i++) {
         SDL_Point score_pos = {
             .x = SCREEN_WIDTH_PX / 2,
             .y = start_y + (i * spacing)
@@ -255,7 +255,7 @@ void draw_high_scores(Game *game) {
     // Draw instructions
     SDL_Point instructions_pos = {
         .x = SCREEN_WIDTH_PX / 2,
-        .y = container.y + container.h - 50
+        .y = container.y + container.h - 40
     };
     drawText(game->renderer, game->ui_font, "Press SPACE to continue", instructions_pos);
 }
