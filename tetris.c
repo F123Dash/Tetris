@@ -295,7 +295,7 @@ void draw_high_scores(Game *game) {
     };
     drawText(game->renderer, game->ui_font, "Press SPACE to continue", instructions_pos);
 }
-//
+//rendering the pause menu
 static uint8_t updatePause(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
     SDL_Point title_point = {
         .x = SCREEN_WIDTH_PX / 2,
@@ -422,7 +422,7 @@ void getPieceSize(uint8_t *piece, Size *size){
         }
     }
 }
-
+//Rotating a Tetromino piece 90 degrees clockwise
 void rotatePiece(uint8_t *piece, uint8_t *rotated){
     memset(rotated, 0, sizeof(uint8_t) * PIECE_SIZE);
     uint8_t i = 0;
@@ -435,56 +435,51 @@ void rotatePiece(uint8_t *piece, uint8_t *rotated){
         }
     }
 }
-
+//Rendering Tetromino piece on screen
 void drawTetromino(SDL_Renderer *renderer, uint8_t piece[PIECE_SIZE], SDL_Point position, uint8_t color){
     for (int i = 0; i < TETROMINOS_DATA_SIZE; ++i) {
-        if (!piece[i]) continue;
-
-        int x, y; getXY(i, &x, &y);
-
+        if (!piece[i]) {
+                continue;
+        }
+        int x, y; 
+        getXY(i, &x, &y);
         SDL_Rect rect = {
             .x = (int)((x + position.x) * (int)BLOCK_SIZE_PX) + (int)ARENA_PADDING_PX,
             .y = (int)(y + position.y - ARENA_PADDING_TOP) * (int)BLOCK_SIZE_PX,
-            .w = BLOCK_SIZE_PX, .h = BLOCK_SIZE_PX
+            .w = BLOCK_SIZE_PX, 
+            .h = BLOCK_SIZE_PX
         };
-
         setColor(renderer, color);
         SDL_RenderFillRect(renderer, &rect);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(renderer, &rect);
     }
 }
-
+//provides a visual representation of the arena
 void printPlaced(uint8_t *placed){
     uint8_t i = 0;
-
     for (int y = 0; y < ARENA_HEIGHT; ++y) {
         printf("%.3d: ", y * ARENA_WIDTH);
-
         for (int x = 0; x < ARENA_WIDTH; ++x) {
             i = (y * ARENA_WIDTH) + x;
-
             printf("%d", placed[i]);
         }
-
         printf("\n");
     }
 }
-
+//Clearing a completed row and shifting the above one below
 void clearRow(uint8_t *placed, uint8_t c){
     uint8_t temp[ARENA_SIZE];
-
     memset(temp, 0, sizeof(uint8_t) * ARENA_SIZE);
     memcpy(temp, placed, sizeof(uint8_t) * ARENA_SIZE);
-
     for (int y = c; y > 0; --y) {
         for (uint8_t x = 0; x < ARENA_WIDTH; ++x) {
             uint8_t i = y * ARENA_WIDTH + x;
-
-            if (i >= 0) temp[i] = placed[i - ARENA_WIDTH];
+            if (i >= 0) {
+                temp[i] = placed[i - ARENA_WIDTH];
+                }
         }
     }
-
     memcpy(placed, temp, sizeof(uint8_t) * ARENA_SIZE);
 }
 

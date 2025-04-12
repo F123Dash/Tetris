@@ -1,1 +1,2 @@
-Kevin,300
+Kevin,1260
+kevin,0
