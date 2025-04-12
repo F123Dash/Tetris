@@ -11,7 +11,7 @@
 #include <string.h>
 
 // Forward declarations of structs
-typedef struct _Game Game;
+typedef struct Game Game;
 
 // Function declarations
 void setColor(SDL_Renderer *renderer, uint8_t color);
@@ -51,7 +51,7 @@ enum {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE, COLOR_GREY, COLOR_BLACK,
 enum {COLLIDE_NONE = 0, COLLIDE_LEFT = 1 << 0, COLLIDE_RIGHT = 1 << 1, COLLIDE_TOP = 1 << 2, COLLIDE_BOTTOM = 1 << 3, COLLIDE_PIECE = 1 << 4};
 enum {UPDATE_MAIN, UPDATE_LOSE, UPDATE_PAUSE, UPDATE_GAME_OVER};
 //Size of a Single Tetris Piece 
-typedef struct _Size {
+typedef struct Size {
     int w;
     int h;
     uint8_t start_x;
@@ -63,7 +63,7 @@ typedef struct _HighScore {
     uint64_t score;
 } HighScore;
 // Represents Overall State of the Game
-typedef struct _Game {
+typedef struct Game {
     uint8_t level;                           // current level (affect the difficulty)
     uint64_t score;                          // current score
     SDL_Renderer *renderer;                  // SDL renderer used to draw graphics
@@ -565,7 +565,7 @@ void Game_Init(Game *game){
     END(game->renderer == NULL, "Could not create renderer", SDL_GetError());
     load_high_scores(game);
 }
-
+//Rendering the placed blocks
 void drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
     for (int x = 0; x < ARENA_WIDTH; ++x) {
         for (int y = 0; y < ARENA_HEIGHT; ++y) {
@@ -1002,11 +1002,11 @@ void Game_Login(Game *game, char *username, size_t username_size){
 
 void setColor(SDL_Renderer *renderer, uint8_t color){
     const SDL_Color colors[] = {
-        [COLOR_RED] = {.r = 239, .g = 71, .b = 111, .a = 255},    // Soft Red
-        [COLOR_GREEN] = {.r = 86, .g = 192, .b = 146, .a = 255},  // Muted Green
-        [COLOR_BLUE] = {.r = 65, .g = 131, .b = 215, .a = 255},   // Royal Blue
-        [COLOR_ORANGE] = {.r = 255, .g = 159, .b = 67, .a = 255}, // Warm Orange
-        [COLOR_GREY] = {.r = 55, .g = 65, .b = 81, .a = 255},     // Slate Grey
+        [COLOR_RED] = {.r = 227, .g = 66, .b = 52, .a = 255},     // Vermillion
+        [COLOR_GREEN] = {.r = 61, .g = 100, .b = 45, .a = 255},   // Fern Green
+        [COLOR_BLUE] = {.r = 2, .g = 86, .b = 105, .a = 255},     // Azure Blue
+        [COLOR_ORANGE] = {.r = 255, .g = 164, .b = 32, .a = 255}, // Luminous Bright Orange
+        [COLOR_GREY] = {.r = 71, .g = 75, .b = 78, .a = 255},     // Blue Grey
         [COLOR_BLACK] = {.r = 30, .g = 35, .b = 41, .a = 255},    // Deep Black
     };
 
