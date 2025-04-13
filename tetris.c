@@ -105,43 +105,6 @@ void drawText(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Poin
     SDL_FreeSurface(surface);
     SDL_DestroyTexture(texture);
 }
-// Add a new function for drawing text with background
-void drawTextWithBackground(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Point point){
-    if (text == NULL || strlen(text) == 0) {
-        fprintf(stderr, "Text is empty");
-        return;
-    }
-    int w = 0;
-    int h = 0;
-    int padding = 12;
-    TTF_SizeText(font, text, &w, &h);
-    SDL_Color font_color = {.r = 255, .g = 255, .b = 255, .a = 255};
-    SDL_Surface *surface = TTF_RenderText_Solid(font, text, font_color);
-    END(surface == NULL, "Could not create text surface", SDL_GetError());
-    SDL_Rect rect = {
-        .x = point.x - (w / 2),
-        .y = point.y - (h / 2),
-        .w = w,
-        .h = h,
-    };
-    SDL_Rect text_background = {
-        .x = rect.x - padding,
-        .y = rect.y - padding,
-        .w = rect.w + padding * 2,
-        .h = rect.h + padding * 2
-    };
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-    END(texture == NULL, "Could not create texture", SDL_GetError());
-    // Add a gradient effect to the background
-    SDL_SetRenderDrawColor(renderer, 40, 44, 52, 255);
-    SDL_RenderFillRect(renderer, &text_background);
-    // Add a border
-    SDL_SetRenderDrawColor(renderer, 65, 131, 215, 100);
-    SDL_RenderDrawRect(renderer, &text_background);
-    SDL_RenderCopy(renderer, texture, NULL, &rect);
-    SDL_FreeSurface(surface);
-    SDL_DestroyTexture(texture);
-}
 //Reads the high scores stored in a file
 void load_high_scores(Game *game) {
     FILE *file = fopen(HIGH_SCORE_FILE, "r");
@@ -832,7 +795,7 @@ void Game_Quit(Game *game){
     SDL_Quit();
 }
 
-void Game_Login(Game *game, char *username, size_t username_size){
+void Game_Login(Game *game, char *username, size_t username_size) {
     bool quit = false;
     bool enter_pressed = false;
     SDL_StartTextInput();
@@ -850,6 +813,12 @@ void Game_Login(Game *game, char *username, size_t username_size){
     };
     bool show_cursor = true;
     uint32_t cursor_timer = SDL_GetTicks();
+
+    game->score = 0;
+    game->level = 0;
+    game->total_rows_cleared = 0;
+    memset(game->placed, 0, sizeof(uint8_t) * ARENA_SIZE);
+
     while (!quit && !enter_pressed) {
         // Handle cursor blinking
         uint32_t current_time = SDL_GetTicks();
