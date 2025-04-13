@@ -39,6 +39,7 @@ void Game_Login(Game *game, char *username, size_t username_size);
 #define MAX_HIGH_SCORES 4
 #define HIGH_SCORE_FILE "highscores.txt"
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX(a,b) ((a) > (b) ? (a) : (b)) 
 #define END(check, str1, str2) \
     if (check) { \
         assert(check); \
@@ -73,6 +74,7 @@ typedef struct Game {
     uint8_t placed[ARENA_SIZE]; // 8 x 18 */ // A 1D array representing the arena grid (8x18 blocks). Each element indicates whether a block is occupied
     HighScore high_scores[MAX_HIGH_SCORES];  // An array to store top high scores 
     int num_high_scores;                     // The number of high scores currently stored
+    uint32_t total_rows_cleared;             // Tracks the total number of rows cleared
 } Game;
 typedef uint8_t (*Update_callback)(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown);  //Defines a function pointer that updates the game based on the current frame, user input etc.
 static char current_username[50];  // Global variable to store current username
@@ -171,7 +173,7 @@ void update_high_scores(Game *game, const char *name, uint64_t score) {
             break;
         }
     }
-    // If score is high enough to be in top 3
+    // If score is high enough to be in top 4
     if (pos < MAX_HIGH_SCORES) {
         // Shift lower scores down
         for (int i = MIN(game->num_high_scores, MAX_HIGH_SCORES - 1); i > pos; i--) {
@@ -190,12 +192,10 @@ void update_high_scores(Game *game, const char *name, uint64_t score) {
 void draw_high_scores(Game *game, SDL_Rect game_over_box) {
         SDL_Rect container = {
             .x = SCREEN_WIDTH_PX / 4,
-            .y = game_over_box.y + game_over_box.h + 20, // Position below the "Game Over" box
+            .y = game_over_box.y + game_over_box.h + 20, 
             .w = SCREEN_WIDTH_PX / 2,
             .h = SCREEN_HEIGHT_PX / 2
         };
-    
-        // Draw border glow
         SDL_Rect glow = {
             .x = container.x - 4,
             .y = container.y - 4,
@@ -204,7 +204,7 @@ void draw_high_scores(Game *game, SDL_Rect game_over_box) {
         };
         setColor(game->renderer, COLOR_BLUE);
         SDL_RenderFillRect(game->renderer, &glow);
-        // Draw container background
+
         setColor(game->renderer, COLOR_BLACK);
         SDL_RenderFillRect(game->renderer, &container);
         SDL_Point title_pos = {
@@ -213,7 +213,6 @@ void draw_high_scores(Game *game, SDL_Rect game_over_box) {
         };
         drawText(game->renderer, game->lose_font, "HIGH SCORES", title_pos);
     
-        // Draw scores with rank and proper spacing
         int start_y = title_pos.y + 100;
         int spacing = 60;
         char score_text[256];
@@ -225,8 +224,6 @@ void draw_high_scores(Game *game, SDL_Rect game_over_box) {
             sprintf(score_text, "#%d  %-20s %8lu", i + 1, game->high_scores[i].name, game->high_scores[i].score);
             drawText(game->renderer, game->ui_font, score_text, score_pos);
         }
-    
-        // Show message if no high scores
         if (game->num_high_scores == 0) {
             SDL_Point no_scores_pos = {
                 .x = SCREEN_WIDTH_PX / 2,
@@ -546,6 +543,7 @@ void Game_Init(Game *game){
     game->renderer = SDL_CreateRenderer(game->window, 0, SDL_RENDERER_SOFTWARE);
     END(game->renderer == NULL, "Could not create renderer", SDL_GetError());
     load_high_scores(game);
+    game->total_rows_cleared = 0;
 }
 //Rendering the placed blocks
 void drawPlaced(uint8_t *placed, SDL_Renderer *renderer) {
@@ -625,38 +623,31 @@ static uint8_t updateLose(Game *game, uint64_t frame, SDL_KeyCode key, bool keyd
     };
     drawText(game->renderer, game->ui_font, score_text, score_pos);
 
-    // Draw high scores below the "Game Over" box
     draw_high_scores(game, container);
 
     if (keydown) {
         switch (key) {
             case SDLK_SPACE:
-                first_update = true;  // Reset for next game
+                first_update = true;
                 return UPDATE_GAME_OVER;
             case SDLK_ESCAPE:
                 Game_Quit(game);
                 exit(0);
         }
     }
-
     return UPDATE_LOSE;
 }
-
+//Responsible for resetting the game
 static uint8_t updateGameOver(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
-    // Reset game state
     game->score = 0;
     game->level = 0;
     memset(game->placed, 0, sizeof(uint8_t) * ARENA_SIZE);
-    
-    // Get new player name
     char username[50];
     Game_Login(game, username, sizeof(username));
-    printf("Welcome back, %s!\n", username);
-    
     return UPDATE_MAIN;
 }
-
-static uint8_t updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown){
+//Core game Loop
+static uint8_t updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keydown) {
     static SDL_Point piece_position = {.x = 0, .y = -1};
     static uint8_t fall_speed = 30;
     static uint8_t current_piece[PIECE_SIZE];
@@ -678,82 +669,63 @@ static uint8_t updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keyd
 
     drawTetromino(game->renderer, current_piece, piece_position, color);
 
-    if (!keydown) fall_speed = 30;
+    if (!keydown) {
+        fall_speed = 30;
+    }
 
     switch (key) {
         case SDLK_d: {
-            SDL_Point check = {.x = piece_position.x + 1,
-                               .y = piece_position.y};
-
+            SDL_Point check = {.x = piece_position.x + 1, .y = piece_position.y};
             if (!collisionCheck(game->placed, current_piece, check)) {
                 piece_position.x++;
             }
-
             break;
         }
-
         case SDLK_a: {
-            SDL_Point check = {.x = piece_position.x - 1,
-                               .y = piece_position.y};
-
+            SDL_Point check = {.x = piece_position.x - 1, .y = piece_position.y};
             if (!collisionCheck(game->placed, current_piece, check)) {
                 piece_position.x--;
             }
-
             break;
         }
-
         case SDLK_s: {
             fall_speed = 1;
             break;
         }
-
         case SDLK_r: {
             uint8_t rotated[PIECE_SIZE];
             SDL_Point check;
-
             rotatePiece(current_piece, rotated);
-
-            uint8_t collide = collisionCheck(game->placed, rotated,
-                                             piece_position);
-
+            uint8_t collide = collisionCheck(game->placed, rotated, piece_position);
             memcpy(&check, &piece_position, sizeof(SDL_Point));
-
             if (collide == COLLIDE_LEFT) {
                 while (collide == COLLIDE_LEFT) {
                     check.x++;
                     collide = collisionCheck(game->placed, rotated, check);
                 }
-
             } else if (collide == COLLIDE_RIGHT) {
                 while (collide == COLLIDE_RIGHT) {
                     check.x--;
                     collide = collisionCheck(game->placed, rotated, check);
                 }
             }
-
             if (collide == COLLIDE_NONE) {
                 memcpy(&piece_position, &check, sizeof(SDL_Point));
                 memcpy(current_piece, rotated, sizeof(uint8_t) * PIECE_SIZE);
             }
-
             break;
         }
-
-        case SDLK_ESCAPE: // Pause the game
+        case SDLK_ESCAPE:
             return UPDATE_PAUSE;
     }
 
     if (frame % fall_speed == 0) {
-        SDL_Point check = {.x = piece_position.x,
-                           .y = piece_position.y + 1};
-        if (!collisionCheck(game->placed, current_piece, check))  {
+        SDL_Point check = {.x = piece_position.x, .y = piece_position.y + 1};
+        if (!collisionCheck(game->placed, current_piece, check)) {
             piece_position.y++;
-        } else{
+        } else {
             Size size;
-
             getPieceSize(current_piece, &size);
-
             if (piece_position.y + size.start_y - size.h < 0) {
                 addToPlaced(game->placed, current_piece, piece_position);
                 return UPDATE_LOSE;
@@ -763,25 +735,31 @@ static uint8_t updateMain(Game *game, uint64_t frame, SDL_KeyCode key, bool keyd
                 pickPiece(current_piece, &color);
                 piece_position.y = -1;
             }
-        } 
+        }
     }
 
     uint8_t lines = checkForRowClearing(game->placed);
+    game->total_rows_cleared += lines;
+    if (game->total_rows_cleared >= (game->level + 1) * 10) {
+        game->level++;
+        fall_speed = MAX(1, fall_speed - 2);
+    }
+
     SDL_Point point = {.x = ARENA_PADDING_PX / 2, .y = 100};
     char score_string[255];
-
     game->score += findPoints(game->level, lines);
-
-    // Simply draw the score text without background or glow
     sprintf(score_string, "Score: %ld", game->score);
     drawText(game->renderer, game->ui_font, score_string, point);
-    
+
+    SDL_Point level_point = {.x = ARENA_PADDING_PX / 2, .y = 150};
+    char level_string[255];
+    sprintf(level_string, "Level: %d", game->level);
+    drawText(game->renderer, game->ui_font, level_string, level_point);
+
     drawPlaced(game->placed, game->renderer);
     return UPDATE_MAIN;
 }
-
 //Main Game Loop
-
 void Game_Update(Game *game, const uint8_t fps){
     uint64_t frame = 0;
     bool quit = false;
@@ -840,7 +818,6 @@ void Game_Update(Game *game, const uint8_t fps){
             elapsed_time = mspd - elapsed_time;
             SDL_Delay(elapsed_time);
         } 
-
         SDL_RenderPresent(game->renderer);
         frame++;
     }
@@ -861,22 +838,18 @@ void Game_Login(Game *game, char *username, size_t username_size){
     SDL_StartTextInput();
     memset(username, 0, username_size);
 
-    // Load the image
     SDL_Surface *image_surface = SDL_LoadBMP("./images/tetris_logo.bmp");
     END(image_surface == NULL, "Could not load image", SDL_GetError());
     SDL_Texture *image_texture = SDL_CreateTextureFromSurface(game->renderer, image_surface);
-    SDL_FreeSurface(image_surface); // Free the surface after creating the texture
-    END(image_texture == NULL, "Could not create texture from image", SDL_GetError());
+    SDL_FreeSurface(image_surface); 
+    END(image_texture == NULL, "Could not create image", SDL_GetError());
 
-    // Define the position and size of the image
     SDL_Rect image_rect = {
-        .x = SCREEN_WIDTH_PX / 2 - 150, // Center the image horizontally
-        .y = SCREEN_HEIGHT_PX / 4 - 50, // Position the image near the top
-        .w = 300, // Width of the image
-        .h = 100  // Height of the image
+        .x = SCREEN_WIDTH_PX / 2 - 150, 
+        .y = SCREEN_HEIGHT_PX / 4 - 50, 
+        .w = 300,
+        .h = 100 
     };
-
-    // Simple blinking cursor
     bool show_cursor = true;
     uint32_t cursor_timer = SDL_GetTicks();
 
@@ -980,9 +953,9 @@ void Game_Login(Game *game, char *username, size_t username_size){
     }
     
     strncpy(current_username, username, sizeof(current_username) - 1);
-    printf("Current username: '%s'\n", username);
+    
 }
-
+//Setting Color for smth smth 
 void setColor(SDL_Renderer *renderer, uint8_t color){
     const SDL_Color colors[] = {
         [COLOR_RED] = {.r = 227, .g = 66, .b = 52, .a = 255},     // Vermillion
@@ -993,20 +966,15 @@ void setColor(SDL_Renderer *renderer, uint8_t color){
         [COLOR_BLACK] = {.r = 30, .g = 35, .b = 41, .a = 255},    // Deep Black
     };
 
-    SDL_SetRenderDrawColor(renderer, colors[color].r, colors[color].g,
-                           colors[color].b, colors[color].a);
+    SDL_SetRenderDrawColor(renderer, colors[color].r, colors[color].g, colors[color].b, colors[color].a);
 }
-
+//MAIN FUNCTION (average (╥﹏╥))
 int main(int argc, char *argv[]){
     Game game;
     char username[50];
-
     Game_Init(&game);
     Game_Login(&game, username, sizeof(username));
-    printf("Welcome, %s!\n", username);
-
     Game_Update(&game, 60);
-
     Game_Quit(&game);
     return 0;
 }

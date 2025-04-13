@@ -1,5 +1,4 @@
+kevin,3160
 Kevin,1260
 Fagun,280
 Fau,280
-kevin,200
-Fau,40
