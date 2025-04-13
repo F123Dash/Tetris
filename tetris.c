@@ -59,7 +59,7 @@ typedef struct Size {
     uint8_t start_y;
 } Size;
 //Stores info about a Player's HighScore
-typedef struct _HighScore {
+typedef struct HighScore {
     char name[50];
     uint64_t score;
 } HighScore;
