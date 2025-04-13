@@ -837,13 +837,11 @@ void Game_Login(Game *game, char *username, size_t username_size){
     bool enter_pressed = false;
     SDL_StartTextInput();
     memset(username, 0, username_size);
-
     SDL_Surface *image_surface = SDL_LoadBMP("./images/tetris_logo.bmp");
     END(image_surface == NULL, "Could not load image", SDL_GetError());
     SDL_Texture *image_texture = SDL_CreateTextureFromSurface(game->renderer, image_surface);
     SDL_FreeSurface(image_surface); 
     END(image_texture == NULL, "Could not create image", SDL_GetError());
-
     SDL_Rect image_rect = {
         .x = SCREEN_WIDTH_PX / 2 - 150, 
         .y = SCREEN_HEIGHT_PX / 4 - 50, 
@@ -852,7 +850,6 @@ void Game_Login(Game *game, char *username, size_t username_size){
     };
     bool show_cursor = true;
     uint32_t cursor_timer = SDL_GetTicks();
-
     while (!quit && !enter_pressed) {
         // Handle cursor blinking
         uint32_t current_time = SDL_GetTicks();
@@ -860,7 +857,6 @@ void Game_Login(Game *game, char *username, size_t username_size){
             show_cursor = !show_cursor;
             cursor_timer = current_time;
         }
-
         // Process events
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -878,14 +874,11 @@ void Game_Login(Game *game, char *username, size_t username_size){
                 }
             }
         }
-
         // Clear screen with a modern gradient background
         SDL_SetRenderDrawColor(game->renderer, 35, 41, 50, 255);
         SDL_RenderClear(game->renderer);
-
         // Render the image
         SDL_RenderCopy(game->renderer, image_texture, NULL, &image_rect);
-
         // Draw decorative header
         SDL_Rect header_bg = {
             .x = 0,
@@ -895,7 +888,6 @@ void Game_Login(Game *game, char *username, size_t username_size){
         };
         setColor(game->renderer, COLOR_BLUE);
         SDL_RenderFillRect(game->renderer, &header_bg);
-
         // Draw input section
         SDL_Rect input_border = {
             .x = SCREEN_WIDTH_PX / 4 - 10,
@@ -903,57 +895,45 @@ void Game_Login(Game *game, char *username, size_t username_size){
             .w = SCREEN_WIDTH_PX / 2 + 20,
             .h = 180
         };
-        
         setColor(game->renderer, COLOR_BLUE);
         SDL_RenderFillRect(game->renderer, &input_border);
-        
         SDL_Rect input_inner = input_border;
         input_inner.x += 2; input_inner.y += 2;
         input_inner.w -= 4; input_inner.h -= 4;
         setColor(game->renderer, COLOR_BLACK);
         SDL_RenderFillRect(game->renderer, &input_inner);
-
         // Draw all text without glow effect
         SDL_Point welcome_pos = {
             .x = SCREEN_WIDTH_PX / 2,
             .y = SCREEN_HEIGHT_PX - 190
         };
         drawText(game->renderer, game->ui_font, "Welcome to Tetris!", welcome_pos);
-        
         char display_text[256];
         if (strlen(username) == 0) {
             strcpy(display_text, "Enter Your Name:  ");
         } else {
             sprintf(display_text, " %s%s", username, show_cursor ? "" : "");
         }
-        
         SDL_Point text_position = {
             .x = SCREEN_WIDTH_PX / 2,
             .y = SCREEN_HEIGHT_PX - 140
         };
         drawText(game->renderer, game->ui_font, display_text, text_position);
-        
         SDL_Point instructions_pos = {
             .x = SCREEN_WIDTH_PX / 2,
             .y = SCREEN_HEIGHT_PX - 90
         };
         drawText(game->renderer, game->ui_font, "Press ENTER to Start", instructions_pos);
-    
         SDL_RenderPresent(game->renderer);
     }
-
     SDL_StopTextInput();
-
     // Free the image texture
     SDL_DestroyTexture(image_texture);
-
     if (quit) {
         Game_Quit(game);
         exit(0);
     }
-    
     strncpy(current_username, username, sizeof(current_username) - 1);
-    
 }
 //Setting Color for smth smth 
 void setColor(SDL_Renderer *renderer, uint8_t color){
