@@ -45,7 +45,7 @@ void Game_Login(Game *game, char *username, size_t username_size);
         assert(check); \
         fprintf(stderr, "%s\n%s", str1, str2); \
         exit(1); \
-    } \
+    } 
 
 enum {PIECE_I, PIECE_J, PIECE_L, PIECE_O, PIECE_S, PIECE_T, PIECE_Z, PIECE_COUNT};
 enum {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_ORANGE, COLOR_GREY, COLOR_BLACK, COLOR_SIZE};
@@ -329,11 +329,11 @@ void rotatePiece(uint8_t *piece, uint8_t *rotated){
     memset(rotated, 0, sizeof(uint8_t) * PIECE_SIZE);
     uint8_t i = 0;
     // 90 degrees
-    for (int x = 0; x < PIECE_HEIGHT; ++x) {
-        for (int y = PIECE_WIDTH - 1; y >= 0; --y) {
+    for (int x = 0; x < PIECE_HEIGHT; x++) {
+        for (int y = PIECE_WIDTH - 1; y >= 0; y--) {
             uint8_t j = y * PIECE_WIDTH + x;
             rotated[i] = piece[j];
-            ++i;
+            i++;
         }
     }
 }
@@ -355,18 +355,6 @@ void drawTetromino(SDL_Renderer *renderer, uint8_t piece[PIECE_SIZE], SDL_Point 
         SDL_RenderFillRect(renderer, &rect);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(renderer, &rect);
-    }
-}
-//provides a visual representation of the arena
-void printPlaced(uint8_t *placed){
-    uint8_t i = 0;
-    for (int y = 0; y < ARENA_HEIGHT; ++y) {
-        printf("%.3d: ", y * ARENA_WIDTH);
-        for (int x = 0; x < ARENA_WIDTH; ++x) {
-            i = (y * ARENA_WIDTH) + x;
-            printf("%d", placed[i]);
-        }
-        printf("\n");
     }
 }
 //Clearing a completed row and shifting the above one below
@@ -811,8 +799,6 @@ void Game_Login(Game *game, char *username, size_t username_size) {
         .w = 300,
         .h = 100 
     };
-    bool show_cursor = true;
-    uint32_t cursor_timer = SDL_GetTicks();
 
     game->score = 0;
     game->level = 0;
@@ -820,12 +806,6 @@ void Game_Login(Game *game, char *username, size_t username_size) {
     memset(game->placed, 0, sizeof(uint8_t) * ARENA_SIZE);
 
     while (!quit && !enter_pressed) {
-        // Handle cursor blinking
-        uint32_t current_time = SDL_GetTicks();
-        if (current_time - cursor_timer > 500) {
-            show_cursor = !show_cursor;
-            cursor_timer = current_time;
-        }
         // Process events
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -867,11 +847,13 @@ void Game_Login(Game *game, char *username, size_t username_size) {
         setColor(game->renderer, COLOR_BLUE);
         SDL_RenderFillRect(game->renderer, &input_border);
         SDL_Rect input_inner = input_border;
+
         input_inner.x += 2; input_inner.y += 2;
+        
         input_inner.w -= 4; input_inner.h -= 4;
         setColor(game->renderer, COLOR_BLACK);
         SDL_RenderFillRect(game->renderer, &input_inner);
-        // Draw all text without glow effect
+
         SDL_Point welcome_pos = {
             .x = SCREEN_WIDTH_PX / 2,
             .y = SCREEN_HEIGHT_PX - 190
@@ -881,7 +863,7 @@ void Game_Login(Game *game, char *username, size_t username_size) {
         if (strlen(username) == 0) {
             strcpy(display_text, "Enter Your Name:  ");
         } else {
-            sprintf(display_text, " %s%s", username, show_cursor ? "" : "");
+            sprintf(display_text, " %s ", username);
         }
         SDL_Point text_position = {
             .x = SCREEN_WIDTH_PX / 2,
